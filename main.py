@@ -1,4 +1,6 @@
 import argparse
+import glob
+import re
 import numpy as np
 import os
 import time
@@ -258,6 +260,30 @@ def anomaly_scoreing(input, pred, pred_label, threshold=0.05):
 
 
 
+# ---------------- TSB-AD "Stock" helpers ----------------
+# File name format: <id>_Stock_id_<k>_Finance_tr_<train_len>_1st_<first_anomaly>.csv, columns: Data,Label
+# Thu muc chua file csv: dat bang bien moi truong STOCK_DIR (vd: /kaggle/input/<ten-dataset>/TSB-AD-U)
+STOCK_DIR = os.environ.get('STOCK_DIR', './dataset/TSB-AD-U')
+
+def get_stock_files():
+    files = sorted(glob.glob(os.path.join(STOCK_DIR, '*_Stock_*.csv')))
+    if not files:
+        files = sorted(glob.glob(os.path.join(STOCK_DIR, '**', '*_Stock_*.csv'), recursive=True))
+    return {os.path.splitext(os.path.basename(f))[0]: f for f in files}
+
+def get_stock_train_end(entity):
+    m = re.search(r'_tr_(\d+)_', entity)
+    if m is None:
+        raise ValueError(f'Cannot parse train length from {entity}')
+    return int(m.group(1))
+
+def get_stock_test_labels(entity):
+    import pandas as pd
+    path = get_stock_files()[entity]
+    label = pd.read_csv(path)['Label'].values.astype(int)
+    return label[get_stock_train_end(entity):]
+
+
 def get_meta_data(entity):
     anomaly_data_dir = './dataset/AnomalyArchive'
     if not os.path.exists(f'{anomaly_data_dir}/'):
@@ -280,7 +306,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Dataset
-    parser.add_argument('--dataset', type=str, default='anomaly_archive', help='The dataset name, [anomaly_archive, beatgan_ecg, smd]')
+    parser.add_argument('--dataset', type=str, default='anomaly_archive', help='The dataset name, [anomaly_archive, iops, smd, smap, msl, stock]')
     parser.add_argument('--entities', type=str, default='0', help='[machine-1-1, ...]')
 
     parser.add_argument('--downsampling', type=int, default=1, help='(defaults to 1)')
@@ -328,8 +354,6 @@ if __name__ == '__main__':
         args.window_step = 1
         #for all subdataset
         entity_list = [str(i).zfill(3) for i in range(1,251)]
-        #for convenience
-        entity_list = ['028']
     elif args.dataset == 'iops':
         args.n_features = 1
         min_features = 1
@@ -338,6 +362,16 @@ if __name__ == '__main__':
         args.window_size = 100
         args.window_step = 10
         entity_list = ['KPI-05f10d3a-239c-3bef-9bdc-a2feeb0037aa', 'KPI-0efb375b-b902-3661-ab23-9a0bb799f4e3', 'KPI-1c6d7a26-1f1a-3321-bb4d-7a9d969ec8f0', 'KPI-301c70d8-1630-35ac-8f96-bc1b6f4359ea', 'KPI-42d6616d-c9c5-370a-a8ba-17ead74f3114', 'KPI-43115f2a-baeb-3b01-96f7-4ea14188343c', 'KPI-431a8542-c468-3988-a508-3afd06a218da', 'KPI-4d2af31a-9916-3d9f-8a8e-8a268a48c095', 'KPI-54350a12-7a9d-3ca8-b81f-f886b9d156fd', 'KPI-55f8b8b8-b659-38df-b3df-e4a5a8a54bc9', 'KPI-57051487-3a40-3828-9084-a12f7f23ee38', 'KPI-6a757df4-95e5-3357-8406-165e2bd49360', 'KPI-6d1114ae-be04-3c46-b5aa-be1a003a57cd', 'KPI-6efa3a07-4544-34a0-b921-a155bd1a05e8', 'KPI-7103fa0f-cac4-314f-addc-866190247439', 'KPI-847e8ecc-f8d2-3a93-9107-f367a0aab37d', 'KPI-8723f0fb-eaef-32e6-b372-6034c9c04b80', 'KPI-9c639a46-34c8-39bc-aaf0-9144b37adfc8', 'KPI-a07ac296-de40-3a7c-8df3-91f642cc14d0', 'KPI-a8c06b47-cc41-3738-9110-12df0ee4c721', 'KPI-ab216663-dcc2-3a24-b1ee-2c3e550e06c9', 'KPI-adb2fde9-8589-3f5b-a410-5fe14386c7af', 'KPI-ba5f3328-9f3f-3ff5-a683-84437d16d554', 'KPI-c02607e8-7399-3dde-9d28-8a8da5e5d251', 'KPI-c69a50cf-ee03-3bd7-831e-407d36c7ee91', 'KPI-da10a69f-d836-3baa-ad40-3e548ecf1fbd', 'KPI-e0747cad-8dc8-38a9-a9ab-855b61f5551d', 'KPI-f0932edd-6400-3e63-9559-0a9860a1baa9', 'KPI-ffb82d38-5f00-37db-abc0-5d2e4e4cb6aa']
+    elif args.dataset == 'stock':
+        args.n_features = 1
+        min_features = 1
+        max_features = 1
+        args.batch_size = 128
+        args.window_size = 100
+        args.window_step = 1      # giu =1 de diem so khop 1-1 voi nhan khi tinh VUS
+        stock_files = get_stock_files()
+        entity_list = list(stock_files.keys())
+        print('Found', len(entity_list), 'Stock series in', STOCK_DIR)
     elif args.dataset == 'smd':
         args.n_features = 38
         min_features = 1
@@ -365,7 +399,21 @@ if __name__ == '__main__':
         entity_list = ['msl']
 
 
+    # ---- Resume: danh sách entity đã xong (khôi phục từ Drive) + giới hạn thời gian ----
+    os.makedirs('./metrics', exist_ok=True)
+    done_path = f'./metrics/done_{args.dataset}.txt'
+    done = set(open(done_path).read().split()) if os.path.exists(done_path) else set()
+    print('Already done:', len(done), 'entities')
+    T0 = float(os.environ.get('SESSION_START', time.time()))   # mốc bắt đầu của cả phiên notebook
+    MAX_HOURS = float(os.environ.get('MAX_HOURS', '0'))
+
     for entity in entity_list:
+        if entity in done:
+            print(f'Skip {entity} (already done)')
+            continue
+        if MAX_HOURS > 0 and (time.time() - T0) > MAX_HOURS * 3600:
+            print(f'Time budget {MAX_HOURS}h reached -> stop before {entity}. Run the notebook again to resume.')
+            break
         if args.dataset == 'anomaly_archive':
             meta_data = get_meta_data(entity)
             train_end = int(meta_data['train_end'])
@@ -398,6 +446,7 @@ if __name__ == '__main__':
             min_range=args.min_range,
             min_features=min_features,
             max_features=max_features,
+            **({'data_path': get_stock_files()[entity], 'train_end': get_stock_train_end(entity)} if args.dataset == 'stock' else {}),
         )
 
 
@@ -469,7 +518,7 @@ if __name__ == '__main__':
                     np.save(f'{test_save_dir}/enc.npy',test_pred_enc)
                     np.save(f'{test_save_dir}/anomaly_score.npy',anomaly_score)
 
-        if args.dataset == 'anomaly_archive':
+        if args.dataset in ('anomaly_archive', 'stock'):
             inputs = np.load(f'{test_save_dir}/input.npy')
             anomaly_score = np.load(f'{test_save_dir}/anomaly_score.npy')
             B,W,D = inputs.shape
@@ -479,24 +528,62 @@ if __name__ == '__main__':
 
             print('Plot')
             import matplotlib.pyplot as plt
-            window = 1000
-            window_e = 1000
-            meta_data = get_meta_data(entity)
-            anomaly_start = meta_data['anomaly_start_in_test']
-            anomaly_end = meta_data['anomaly_end_in_test']
-            if anomaly_start==anomaly_end:
-                anomaly_end += 1
-            anomaly_length = anomaly_end - anomaly_start
+            if args.dataset == 'anomaly_archive':
+                window = 1000
+                window_e = 1000
+                meta_data = get_meta_data(entity)
+                anomaly_start = meta_data['anomaly_start_in_test']
+                anomaly_end = meta_data['anomaly_end_in_test']
+                if anomaly_start==anomaly_end:
+                    anomaly_end += 1
+                anomaly_length = anomaly_end - anomaly_start
 
-            plt.figure()
-            if window>len(anomaly_score):
-                window = anomaly_start
-                window_e = len(anomaly_score)-anomaly_end
-            plt.plot(anomaly_score[anomaly_start-window:anomaly_end+window_e], label='anomaly_score')
-            plt.plot(inputs[anomaly_start-window:anomaly_end+window_e], label='input')
-            plt.axvspan(window, window+anomaly_length, color='r', alpha=0.3)
-            plt.legend()
-            plt.savefig(f'{test_save_dir}/fig_{entity}.png')
-            plt.close()
+                plt.figure()
+                if window>len(anomaly_score):
+                    window = anomaly_start
+                    window_e = len(anomaly_score)-anomaly_end
+                plt.plot(anomaly_score[anomaly_start-window:anomaly_end+window_e], label='anomaly_score')
+                plt.plot(inputs[anomaly_start-window:anomaly_end+window_e], label='input')
+                plt.axvspan(window, window+anomaly_length, color='r', alpha=0.3)
+                plt.legend()
+                plt.savefig(f'{test_save_dir}/fig_{entity}.png')
+                plt.close()
+                gt = np.zeros(len(anomaly_score), dtype=int)
+                gt[anomaly_start:anomaly_end] = 1
+            else:  # stock
+                gt = get_stock_test_labels(entity).astype(int)
+                n = min(len(gt), len(anomaly_score))
+                if len(gt) != len(anomaly_score):
+                    print(f'Warning: label len {len(gt)} != score len {len(anomaly_score)}, cropping to {n}')
+                gt, anomaly_score, inputs = gt[:n], anomaly_score[:n], inputs[:n]
+                plt.figure(figsize=(14, 4))
+                plt.plot(inputs, label='input', linewidth=0.6)
+                plt.plot(anomaly_score, label='anomaly_score', linewidth=0.6)
+                plt.fill_between(np.arange(n), 0, 1, where=gt > 0, color='r', alpha=0.25, transform=plt.gca().get_xaxis_transform())
+                plt.legend()
+                plt.savefig(f'{test_save_dir}/fig_{entity}.png')
+                plt.close()
+
+            # ---- Evaluation: VUS-ROC, VUS-PR, Range F-score ----
+            try:
+                from vus.metrics import get_metrics
+                import csv
+                if gt.sum() == 0:
+                    raise ValueError('no anomaly in the test labels')
+                res = get_metrics(anomaly_score, gt, metric='all', slidingWindow=W)
+                row = {'entity': entity, 'VUS_ROC': res.get('VUS_ROC'), 'VUS_PR': res.get('VUS_PR'), 'RF': res.get('RF')}
+                os.makedirs('./metrics', exist_ok=True)
+                mpath = f'./metrics/{args.dataset}.csv'
+                is_new = not os.path.exists(mpath)
+                with open(mpath, 'a', newline='') as f:
+                    wr = csv.DictWriter(f, fieldnames=list(row))
+                    if is_new: wr.writeheader()
+                    wr.writerow(row)
+                print('Metrics', row)
+            except Exception as e:
+                print('Metric computation failed:', repr(e))
 
         print('Finish')
+        with open(done_path, 'a') as f:
+            f.write(entity + '\n')
+        os.system(os.environ.get('UPLOAD_CMD', 'true'))
