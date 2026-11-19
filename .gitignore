@@ -22,6 +22,24 @@ ENV/
 *.bak
 *.log
 
+# Zip archives
+*.zip
+create_zip.py
+
+# Academic reports, papers and LaTeX generation scripts
+*.tex
+BAO_CAO_BAI_LAM_REDLAMP.md
+scripts/fix_formatting.py
+scripts/format_tables.py
+scripts/generate_ieee_latex_report.py
+scripts/latex_ch1_ch2.py
+scripts/latex_ch3_ch4.py
+scripts/latex_ch5_ch6_ch7.py
+scripts/latex_generator_parts.py
+scripts/make_sigconf.py
+scripts/update_to_single_seed.py
+scripts/verify_notebook.py
+
 # Rust target
 target/
 redlamp_demo/target/
