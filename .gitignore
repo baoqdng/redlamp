@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Pytest / Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Environments
+env/
+venv/
+ENV/
+.env
+
+# Scratch & temporary files
+*.tmp
+*.bak
+*.log
+
+# Rust target
+target/
+redlamp_demo/target/
+
+# Result directory symlink/junction
+result

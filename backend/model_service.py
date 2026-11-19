@@ -1,106 +1,354 @@
 import os
-import glob
 import re
+import ast
+import glob
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.decomposition import PCA
+from typing import Dict, Any, List, Optional, Tuple
 
 import utils
 from models.meta import ConvAEC
-from main import convolve_minmax_score, mse, label_score_selected_feature
+from main import anomaly_scoreing
+from backend.metrics_eval import (
+    PAPER_REFERENCE,
+    PaperMetricor,
+    align_labels_centre,
+    compute_paper_metrics,
+    compute_rf_oracle,
+    load_eval_cache,
+    save_eval_cache,
+)
 
-# Default 12 anomaly classes from RedLamp
 ANOMALY_TYPES = [
     'normal', 'spike', 'flip', 'speedup', 'noise', 'cutoff',
     'average', 'scale', 'wander', 'contextual', 'upsidedown', 'mixture'
 ]
 
-DATASET_FEATURES = {
-    'stock': 1,
-    'anomaly_archive': 1,
-    'iops': 1,
-    'smd': 38,
-    'smap': 25,
-    'msl': 55
+PSEUDO_ANOMALY_INFO = {
+    0: {
+        "name": "normal",
+        "name_vi": "Bình thường",
+        "desc_vi": "Tín hiệu hoạt động ổn định, không có biến dạng bất thường giả lập."
+    },
+    1: {
+        "name": "spike",
+        "name_vi": "Đỉnh nhọn (Spike)",
+        "desc_vi": "Biến động tăng/giảm biên độ đột biến cục bộ tại 1-2 điểm."
+    },
+    2: {
+        "name": "flip",
+        "name_vi": "Đảo cực (Flip)",
+        "desc_vi": "Đảo ngược dấu hoặc cực tính tín hiệu so với hình thái chuẩn."
+    },
+    3: {
+        "name": "speedup",
+        "name_vi": "Tăng tốc tần số (Speedup)",
+        "desc_vi": "Chu kỳ hoặc tần số dao động của chuỗi tăng nhanh bất thường."
+    },
+    4: {
+        "name": "noise",
+        "name_vi": "Nhiễu ngẫu nhiên (Noise)",
+        "desc_vi": "Biên độ bị xáo trộn bởi nhiễu trắng ngẫu nhiên cường độ lớn."
+    },
+    5: {
+        "name": "cutoff",
+        "name_vi": "Cắt cụt biên độ (Cutoff)",
+        "desc_vi": "Tín hiệu bị giới hạn trần hoặc đáy (clipping/saturation)."
+    },
+    6: {
+        "name": "average",
+        "name_vi": "Trung bình hóa (Average)",
+        "desc_vi": "Tín hiệu bị làm phẳng, mất đi dao động và biến thiên chi tiết."
+    },
+    7: {
+        "name": "scale",
+        "name_vi": "Co giãn biên độ (Scale)",
+        "desc_vi": "Biên độ toàn bộ cửa sổ bị phóng to hoặc thu nhỏ bất thường."
+    },
+    8: {
+        "name": "wander",
+        "name_vi": "Trôi dạt xu hướng (Wander)",
+        "desc_vi": "Đường baseline trôi dạt dần khỏi trục cân bằng chuẩn."
+    },
+    9: {
+        "name": "contextual",
+        "name_vi": "Bất thường ngữ cảnh (Contextual)",
+        "desc_vi": "Giá trị nằm trong khoảng hợp lệ nhưng không khớp với nhịp điệu xung quanh."
+    },
+    10: {
+        "name": "upsidedown",
+        "name_vi": "Lộn ngược chuỗi (Upside-down)",
+        "desc_vi": "Hình thái chuỗi bị đảo ngược chiều dọc qua trục trung vị."
+    },
+    11: {
+        "name": "mixture",
+        "name_vi": "Bất thường hỗn hợp (Mixture)",
+        "desc_vi": "Sự kết hợp đồng thời của nhiều loại biến dạng giả lập khác nhau."
+    }
 }
 
+
 class ModelService:
-    def __init__(self, pretrain_dir="D:/repo/redlamp/pretrain"):
-        self.pretrain_dir = os.path.abspath(pretrain_dir)
-        self.model_cache = {}
+    """
+    Service indexing ALL entities across all 5 datasets strictly from
+    D:/repo/redlamp/dataset, pre-trained models inside D:/repo/redlamp/pretrain,
+    and metrics inside D:/repo/redlamp/metrics.
+    """
 
-    def list_models(self):
-        """Discovers all models in pretrain_dir and extracts their configuration."""
-        models = []
-        pattern = os.path.join(self.pretrain_dir, "**", "bestmodel.pkl")
-        for pkl_path in glob.glob(pattern, recursive=True):
-            dir_path = os.path.dirname(pkl_path)
-            rel_dir = os.path.relpath(dir_path, self.pretrain_dir).replace("\\", "/")
-            parts = rel_dir.split("/")
-            
-            # parts structure: [dataset, entity, cfg_folder (d1_b128_w100_s1), seed (0)]
-            dataset = parts[0] if len(parts) > 0 else "unknown"
-            entity = parts[1] if len(parts) > 1 else "default"
-            cfg = parts[2] if len(parts) > 2 else "d1_b128_w100_s1"
-            seed = parts[3] if len(parts) > 3 else "0"
+    def __init__(
+        self,
+        pretrain_dir: Optional[str] = None,
+        dataset_dir: Optional[str] = None,
+        metrics_dir: Optional[str] = None,
+    ):
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        self.base_dir = base_dir
+        self.pretrain_dir = os.path.abspath(pretrain_dir or os.path.join(base_dir, "pretrain"))
+        self.dataset_dir = os.path.abspath(dataset_dir or os.path.join(base_dir, "dataset"))
+        self.metrics_dir = os.path.abspath(metrics_dir or os.path.join(base_dir, "metrics"))
 
-            # Parse config folder name
-            m_w = re.search(r'w(\d+)', cfg)
-            m_s = re.search(r's(\d+)', cfg)
-            m_b = re.search(r'b(\d+)', cfg)
-            m_d = re.search(r'd(\d+)', cfg)
+        self.model_cache: Dict[str, Tuple[ConvAEC, utils.AttrDict]] = {}
+        self.data_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}
+        self.nasa_meta_df: Optional[pd.DataFrame] = None
+        self.stock_metrics: Dict[str, Dict[str, float]] = {}
+        self.eval_cache_path = os.path.join(self.metrics_dir, "paper_eval_cache.json")
+        self.eval_cache = load_eval_cache(self.eval_cache_path)
+        self.index_cache: Dict[str, List[Dict[str, Any]]] = {}
+        self.scan_index()
 
-            window_size = int(m_w.group(1)) if m_w else 100
-            window_step = int(m_s.group(1)) if m_s else 1
-            batch_size = int(m_b.group(1)) if m_b else 128
-            downsampling = int(m_d.group(1)) if m_d else 1
-            n_features = DATASET_FEATURES.get(dataset, 1)
+    def _parse_stock_csv(self, path: str) -> Dict[str, Dict[str, float]]:
+        res: Dict[str, Dict[str, float]] = {}
+        if not path or not os.path.exists(path):
+            return res
+        try:
+            df = pd.read_csv(path)
+            for _, row in df.iterrows():
+                ent = str(row.get("entity", "")).strip()
+                if not ent:
+                    continue
+                res[ent] = {
+                    "vus_roc": float(row.get("VUS_ROC", row.get("VUS-ROC", 0.0))),
+                    "vus_pr": float(row.get("VUS_PR", row.get("VUS-PR", 0.0))),
+                    "rf": float(row.get("RF", 0.0)),
+                }
+        except Exception as e:
+            print(f"[ModelService] Warning parsing stock metrics {path}: {e}")
+        return res
 
-            # Check loss files
-            loss_files = [os.path.basename(f) for f in glob.glob(os.path.join(dir_path, "*loss*.txt"))]
-            has_loss = len(loss_files) > 0
+    def _find_bestmodel(self, root_dir: str) -> Optional[str]:
+        if not root_dir or not os.path.isdir(root_dir):
+            return None
+        pkls = sorted(glob.glob(os.path.join(root_dir, "**", "bestmodel.pkl"), recursive=True))
+        if not pkls:
+            return None
+        for p in pkls:
+            if os.path.basename(os.path.dirname(p)) == "0":
+                return p
+        return pkls[0]
 
-            model_id = rel_dir
-            display_name = f"{dataset.upper()} - {entity} (W={window_size}, D={n_features})"
+    def _load_nasa_meta(self) -> pd.DataFrame:
+        if self.nasa_meta_df is None:
+            csv_path = os.path.join(self.dataset_dir, "NASA", "labeled_anomalies.csv")
+            if os.path.exists(csv_path):
+                self.nasa_meta_df = pd.read_csv(csv_path)
+            else:
+                self.nasa_meta_df = pd.DataFrame(columns=["chan_id", "spacecraft", "anomaly_sequences"])
+        return self.nasa_meta_df
 
-            models.append({
-                "model_id": model_id,
-                "display_name": display_name,
-                "dataset": dataset,
-                "entity": entity,
-                "config_str": cfg,
-                "seed": seed,
-                "n_features": n_features,
-                "window_size": window_size,
-                "window_step": window_step,
+    def scan_index(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Indexes every entity from D:/repo/redlamp/dataset backed by pretrain/ checkpoints."""
+        datasets: Dict[str, List[Dict[str, Any]]] = {}
+        self.stock_metrics = self._parse_stock_csv(os.path.join(self.metrics_dir, "stock_per_entity.csv"))
+        nasa_meta = self._load_nasa_meta()
+
+        # 1. SMD (All 28 machines from dataset/ServerMachineDataset/test/*.txt + pretrain/smd)
+        smd_test_dir = os.path.join(self.dataset_dir, "ServerMachineDataset", "test")
+        smd_disk_ents = set()
+        if os.path.isdir(smd_test_dir):
+            for f in os.listdir(smd_test_dir):
+                if f.endswith(".txt"):
+                    smd_disk_ents.add(os.path.splitext(f)[0])
+        smd_pre_root = os.path.join(self.pretrain_dir, "smd")
+        smd_default_model = self._find_bestmodel(smd_pre_root)
+        if os.path.isdir(smd_pre_root):
+            for d in os.listdir(smd_pre_root):
+                if os.path.isdir(os.path.join(smd_pre_root, d)):
+                    smd_disk_ents.add(d)
+
+        smd_entities = []
+        for ent_name in sorted(smd_disk_ents):
+            own_model = self._find_bestmodel(os.path.join(smd_pre_root, ent_name))
+            model_path = own_model or smd_default_model
+            smd_entities.append({
+                "dataset": "smd",
+                "entity": ent_name,
+                "seeds": [0],
+                "default_seed": 0,
+                "n_features": 38,
+                "window_size": 100,
+                "window_step": 10,
                 "embedding_dim": 128,
-                "classifier_dim": 32,
-                "classes": len(ANOMALY_TYPES),
-                "anomaly_types": ANOMALY_TYPES,
-                "has_loss": has_loss,
-                "loss_files": loss_files,
-                "pkl_size": os.path.getsize(pkl_path)
+                "has_model": model_path is not None,
+                "model_path": model_path,
+                "has_own_checkpoint": own_model is not None,
+                "is_multi_seed": False,
+                "per_seed_metrics": {},
+                "aggregate_metrics": None,
+                "single_metrics": None,
             })
+        datasets["smd"] = smd_entities
 
-        models.sort(key=lambda x: (x["dataset"], x["entity"]))
-        return models
+        # 2. IOPS / AIOPS (All 29 KPIs from dataset/IOPS/*.test.out + pretrain/iops)
+        iops_dir = os.path.join(self.dataset_dir, "IOPS")
+        iops_disk_ents = set()
+        if os.path.isdir(iops_dir):
+            for f in os.listdir(iops_dir):
+                if f.endswith(".test.out"):
+                    iops_disk_ents.add(f[:-9])
+        iops_pre_root = os.path.join(self.pretrain_dir, "iops")
+        iops_default_model = self._find_bestmodel(iops_pre_root)
+        if os.path.isdir(iops_pre_root):
+            for d in os.listdir(iops_pre_root):
+                if os.path.isdir(os.path.join(iops_pre_root, d)):
+                    iops_disk_ents.add(d)
 
-    def get_model(self, model_id):
-        """Loads and caches ConvAEC model on CPU."""
-        if model_id in self.model_cache:
-            return self.model_cache[model_id]
+        iops_entities = []
+        for ent_name in sorted(iops_disk_ents):
+            own_model = self._find_bestmodel(os.path.join(iops_pre_root, ent_name))
+            model_path = own_model or iops_default_model
+            iops_entities.append({
+                "dataset": "iops",
+                "entity": ent_name,
+                "seeds": [0],
+                "default_seed": 0,
+                "n_features": 1,
+                "window_size": 100,
+                "window_step": 10,
+                "embedding_dim": 128,
+                "has_model": model_path is not None,
+                "model_path": model_path,
+                "has_own_checkpoint": own_model is not None,
+                "is_multi_seed": False,
+                "per_seed_metrics": {},
+                "aggregate_metrics": None,
+                "single_metrics": None,
+            })
+        datasets["iops"] = iops_entities
 
-        full_dir = os.path.join(self.pretrain_dir, model_id.replace("/", os.sep))
-        pkl_path = os.path.join(full_dir, "bestmodel.pkl")
-        if not os.path.exists(pkl_path):
-            raise FileNotFoundError(f"Model file not found at: {pkl_path}")
+        # 3 & 4. MSL (27 channels) & SMAP (55 channels) from dataset/NASA
+        for ds_name, n_feat, sc_code in [("msl", 55, "MSL"), ("smap", 25, "SMAP")]:
+            ds_root = os.path.join(self.pretrain_dir, ds_name)
+            model_path = self._find_bestmodel(ds_root)
+            ds_entities = []
+            if model_path:
+                chans = sorted(
+                    nasa_meta.loc[nasa_meta["spacecraft"] == sc_code, "chan_id"].tolist()
+                ) if not nasa_meta.empty else [ds_name]
+                local_chans = [
+                    c for c in chans
+                    if os.path.exists(os.path.join(self.dataset_dir, "NASA", "test", f"{c}.npy"))
+                ]
+                if not local_chans:
+                    local_chans = [ds_name]
+                for chan in local_chans:
+                    ds_entities.append({
+                        "dataset": ds_name,
+                        "entity": chan,
+                        "seeds": [0],
+                        "default_seed": 0,
+                        "n_features": n_feat,
+                        "window_size": 100,
+                        "window_step": 10,
+                        "embedding_dim": 128,
+                        "has_model": True,
+                        "model_path": model_path,
+                        "has_own_checkpoint": True,
+                        "is_multi_seed": False,
+                        "per_seed_metrics": {},
+                        "aggregate_metrics": None,
+                        "single_metrics": None,
+                    })
+            datasets[ds_name] = ds_entities
 
-        # Determine n_features
-        dataset = model_id.split("/")[0]
-        n_features = DATASET_FEATURES.get(dataset, 1)
+        # 5. Stock (All 20 entities from dataset/stock/*.csv + pretrain/stock)
+        stock_dir = os.path.join(self.dataset_dir, "stock")
+        stock_disk_ents = set()
+        if os.path.isdir(stock_dir):
+            for f in os.listdir(stock_dir):
+                if f.endswith(".csv"):
+                    stock_disk_ents.add(os.path.splitext(f)[0])
+        stock_pre_root = os.path.join(self.pretrain_dir, "stock")
+        stock_default_model = self._find_bestmodel(stock_pre_root)
+        if os.path.isdir(stock_pre_root):
+            for d in os.listdir(stock_pre_root):
+                if os.path.isdir(os.path.join(stock_pre_root, d)):
+                    stock_disk_ents.add(d)
+
+        stock_entities = []
+        for ent_name in sorted(stock_disk_ents):
+            own_model = self._find_bestmodel(os.path.join(stock_pre_root, ent_name))
+            model_path = own_model or stock_default_model
+            stock_entities.append({
+                "dataset": "stock",
+                "entity": ent_name,
+                "seeds": [0],
+                "default_seed": 0,
+                "n_features": 1,
+                "window_size": 100,
+                "window_step": 1 if own_model else 10,
+                "embedding_dim": 128,
+                "has_model": model_path is not None,
+                "model_path": model_path,
+                "has_own_checkpoint": own_model is not None,
+                "is_multi_seed": False,
+                "per_seed_metrics": {},
+                "aggregate_metrics": None,
+                "single_metrics": self.stock_metrics.get(ent_name),
+            })
+        datasets["stock"] = stock_entities
+
+        self.index_cache = datasets
+        return datasets
+
+    def get_model_path(self, dataset: str, entity: str, seed: int = 0) -> Optional[str]:
+        """Resolves own entity bestmodel.pkl or dataset representative bestmodel.pkl inside pretrain/."""
+        if dataset in ("msl", "smap"):
+            return self._find_bestmodel(os.path.join(self.pretrain_dir, dataset))
+        own = self._find_bestmodel(os.path.join(self.pretrain_dir, dataset, entity))
+        if own:
+            return own
+        return self._find_bestmodel(os.path.join(self.pretrain_dir, dataset))
+
+    def get_test_dir(self, dataset: str, entity: str, seed: int = 0) -> Optional[str]:
+        """Returns entity's own test_all/*.npy directory if it exists inside pretrain/."""
+        if dataset in ("msl", "smap"):
+            return None
+        own = self._find_bestmodel(os.path.join(self.pretrain_dir, dataset, entity))
+        if not own:
+            return None
+        test_all = os.path.join(os.path.dirname(own), "test_all")
+        if os.path.isdir(test_all) and os.path.exists(os.path.join(test_all, "anomaly_score.npy")):
+            return test_all
+        return None
+
+    def load_model(self, dataset: str, entity: str, seed: int = 0) -> Tuple[ConvAEC, utils.AttrDict]:
+        """Loads and caches ConvAEC checkpoint on CPU keyed by resolved file path."""
+        model_path = self.get_model_path(dataset, entity, 0)
+        if not model_path or not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found in pretrain/ for {dataset}/{entity}")
+
+        if model_path in self.model_cache:
+            return self.model_cache[model_path]
+
+        n_features = 1
+        if dataset == "smd":
+            n_features = 38
+        elif dataset == "smap":
+            n_features = 25
+        elif dataset == "msl":
+            n_features = 55
 
         params = utils.AttrDict(
             name='ConvAEC',
@@ -114,360 +362,611 @@ class ModelService:
             stride=2,
             padding=2,
             anomaly_types=ANOMALY_TYPES,
-            classes=len(ANOMALY_TYPES),
+            classes=12,
             classifier_dim=32,
             c_loss_ratio=0.1,
             apply_anomaly_mask=True,
             label_smoothing=True,
             alpha=0.1,
             beta=0.01,
+            fix_double_softmax=False,
+            epoch=100,
+            lr=0.001,
         )
 
         model = ConvAEC(params)
-        state_dict = torch.load(pkl_path, map_location='cpu')
+        state_dict = torch.load(model_path, map_location='cpu', weights_only=False)
         model.load_state_dict(state_dict)
         model.eval()
 
-        self.model_cache[model_id] = (model, params)
+        self.model_cache[model_path] = (model, params)
         return model, params
 
-    def get_loss_data(self, model_id):
-        """Reads loss text files if present."""
-        full_dir = os.path.join(self.pretrain_dir, model_id.replace("/", os.sep))
-        files = {
-            "train_loss": os.path.join(full_dir, "train_loss.txt"),
-            "train_loss_ae": os.path.join(full_dir, "train_loss_ae.txt"),
-            "train_loss_c": os.path.join(full_dir, "train_loss_c.txt"),
-            "valid_loss": os.path.join(full_dir, "valid_loss.txt"),
-            "valid_loss_ae": os.path.join(full_dir, "valid_loss_ae.txt"),
-            "valid_loss_c": os.path.join(full_dir, "valid_loss_c.txt"),
-            "time": os.path.join(full_dir, "time.txt"),
-        }
+    def _run_batched_inference(self, model: ConvAEC, windows: np.ndarray, batch_size: int = 512) -> Tuple[np.ndarray, np.ndarray]:
+        """Executes batched CPU inference over sliding windows to prevent memory spikes."""
+        hats, outs = [], []
+        with torch.no_grad():
+            for i in range(0, len(windows), batch_size):
+                batch_t = torch.from_numpy(windows[i : i + batch_size])
+                x_hat, x_out, _ = model(batch_t)
+                hats.append(x_hat.cpu().numpy())
+                outs.append(x_out.cpu().numpy())
+        return np.concatenate(hats, axis=0), np.concatenate(outs, axis=0)
 
-        result = {}
-        for k, p in files.items():
-            if os.path.exists(p):
-                try:
-                    data = np.loadtxt(p)
-                    result[k] = data.tolist() if data.ndim > 0 else [float(data)]
-                except Exception:
-                    result[k] = []
-            else:
-                result[k] = []
-        return result
+    def _resolve_paper_metrics(
+        self,
+        dataset: str,
+        entity: str,
+        scores: np.ndarray,
+        gt_aligned: Optional[np.ndarray],
+        window: int,
+        step: int,
+    ) -> Optional[Dict[str, float]]:
+        """
+        Returns VUS-ROC, VUS-PR, Range-F (mean+3std), RF (oracle), and R-AUC
+        under D:/REDLAMP-danh/REDLAMP-main/evaluate.py ('paper' protocol),
+        cached to metrics/paper_eval_cache.json for instant repeat loads.
+        """
+        cache_key = f"{dataset}:{entity}:paper"
+        if cache_key in self.eval_cache:
+            return self.eval_cache[cache_key]
 
-    def analyze_series(self, model_id, series_data, labels=None, n_train=500,
-                       threshold_type="percentile", threshold_val=99.5, ce_threshold=0.05,
-                       step=1):
+        res: Optional[Dict[str, float]] = None
+        if dataset == "stock" and entity in self.stock_metrics:
+            base_m = dict(self.stock_metrics[entity])
+            rf_oracle = base_m["rf"]
+            if gt_aligned is not None and len(gt_aligned) == len(scores) and np.sum(gt_aligned) > 0:
+                grader = PaperMetricor()
+                rf_oracle = compute_rf_oracle(grader, (gt_aligned > 0).astype(int), scores, n_thresh=15)
+            res = {
+                "vus_roc": float(base_m["vus_roc"]),
+                "vus_pr": float(base_m["vus_pr"]),
+                "rf": float(base_m["rf"]),
+                "rf_oracle": float(rf_oracle),
+            }
+        elif gt_aligned is not None and len(gt_aligned) == len(scores) and np.sum(gt_aligned) > 0:
+            res = compute_paper_metrics(scores, gt_aligned, window=window, step=step, compute_oracle=True)
+
+        if res is not None:
+            self.eval_cache[cache_key] = res
+            save_eval_cache(self.eval_cache_path, self.eval_cache)
+        return res
+
+    def load_entity_data(self, dataset: str, entity: str, seed: int = 0) -> Dict[str, Any]:
         """
-        Executes the full RedLamp evaluation pipeline on CPU.
-        series_data: np.ndarray shape (T, D) or (T,)
+        Loads entity test_all/*.npy when available, or evaluates live on CPU using
+        the entity's real dataset series inside D:/repo/redlamp/dataset.
         """
-        model, params = self.get_model(model_id)
+        key = (dataset, entity)
+        if key in self.data_cache:
+            return self.data_cache[key]
+
+        model, params = self.load_model(dataset, entity, 0)
         W = params.n_time
         D = params.n_features
+        test_dir = self.get_test_dir(dataset, entity, 0)
 
-        # Ensure 2D (T, D)
-        if series_data.ndim == 1:
-            series_data = series_data.reshape(-1, 1)
+        gt_labels = None
+        eval_step = 1
 
-        T, actual_D = series_data.shape
-        if actual_D != D:
-            # Handle feature mismatch gracefully (take first D or pad)
-            if actual_D > D:
-                series_data = series_data[:, :D]
+        if test_dir is not None:
+            anomaly_score = np.load(os.path.join(test_dir, "anomaly_score.npy"))
+            inp_last = None
+            input_3d = None
+            if os.path.exists(os.path.join(test_dir, "input_last.npy")):
+                inp_last = np.load(os.path.join(test_dir, "input_last.npy"))
+            if os.path.exists(os.path.join(test_dir, "input.npy")):
+                input_3d = np.load(os.path.join(test_dir, "input.npy"))
+                if inp_last is None:
+                    inp_last = input_3d[:, -1, :]
+
+            if os.path.exists(os.path.join(test_dir, "mse.npy")):
+                mse = np.load(os.path.join(test_dir, "mse.npy"))
+            elif input_3d is not None and os.path.exists(os.path.join(test_dir, "pred.npy")):
+                pred_3d = np.load(os.path.join(test_dir, "pred.npy"))
+                mse = np.mean((input_3d - pred_3d) ** 2, axis=(1, 2))
             else:
-                pad = np.zeros((T, D - actual_D))
-                series_data = np.hstack([series_data, pad])
+                mse = anomaly_score.copy()
 
-        n_train = min(max(W + 5, int(n_train)), T)
+            pred_label = np.load(os.path.join(test_dir, "pred_label.npy"))
+            label = np.load(os.path.join(test_dir, "label.npy")) if os.path.exists(os.path.join(test_dir, "label.npy")) else None
 
-        # 1. Normalization (fit on first n_train points only)
-        scaler = MinMaxScaler()
-        scaler.fit(series_data[:n_train])
-        series_norm = scaler.transform(series_data)
+            if dataset == "iops":
+                iops_file = os.path.join(self.dataset_dir, "IOPS", f"{entity}.test.out")
+                if os.path.exists(iops_file):
+                    df_i = pd.read_csv(iops_file, header=None, names=["Value", "Label"])
+                    gt_raw = df_i["Label"].values[-(len(anomaly_score) + W - 1):]
+                    gt_labels = align_labels_centre(gt_raw, len(anomaly_score), window=W, step=1)
+            elif dataset == "stock":
+                stock_file = os.path.join(self.dataset_dir, "stock", f"{entity}.csv")
+                if os.path.exists(stock_file):
+                    df_s = pd.read_csv(stock_file)
+                    if "Label" in df_s.columns:
+                        gt_raw = df_s["Label"].values[-(len(anomaly_score) + W - 1):]
+                        gt_labels = align_labels_centre(gt_raw, len(anomaly_score), window=W, step=1)
+        else:
+            # Evaluate live from dataset/
+            gt_full = None
+            if dataset == "smd":
+                te_path = os.path.join(self.dataset_dir, "ServerMachineDataset", "test", f"{entity}.txt")
+                lbl_path = os.path.join(self.dataset_dir, "ServerMachineDataset", "test_label", f"{entity}.txt")
+                if os.path.exists(te_path):
+                    series_norm = np.loadtxt(te_path, delimiter=",", dtype=np.float32)
+                    if os.path.exists(lbl_path):
+                        gt_full = np.loadtxt(lbl_path, delimiter=",", dtype=int)
+                else:
+                    sample_csv = os.path.join(self.dataset_dir, "samples", "sample_smd_machine_1_1.csv")
+                    df_smd = pd.read_csv(sample_csv)
+                    feat_cols = [c for c in df_smd.columns if c.lower() != "label"][:D]
+                    series_norm = df_smd[feat_cols].values.astype(np.float32)
+                    gt_full = df_smd["Label"].values.astype(int) if "Label" in df_smd.columns else None
 
-        # 2. Sliding windows
-        window_step = max(1, int(step))
-        windows = []
-        window_indices = []  # time index t of window end point: [t - W + 1, t]
-        for start_idx in range(0, T - W + 1, window_step):
-            end_idx = start_idx + W
-            windows.append(series_norm[start_idx:end_idx])
-            window_indices.append(end_idx - 1)
+            elif dataset == "iops":
+                tr_file = os.path.join(self.dataset_dir, "IOPS", f"{entity}.train.out")
+                te_file = os.path.join(self.dataset_dir, "IOPS", f"{entity}.test.out")
+                if not os.path.exists(te_file):
+                    raise FileNotFoundError(f"IOPS test file not found for {entity}")
+                df_te = pd.read_csv(te_file, header=None, names=["Value", "Label"])
+                te_vals = df_te["Value"].values.astype(np.float32).reshape(-1, 1)
+                if os.path.exists(tr_file):
+                    df_tr = pd.read_csv(tr_file, header=None, names=["Value", "Label"])
+                    scaler = MinMaxScaler().fit(df_tr["Value"].values.astype(np.float32).reshape(-1, 1))
+                else:
+                    scaler = MinMaxScaler().fit(te_vals[:500])
+                series_norm = scaler.transform(te_vals).astype(np.float32)
+                gt_full = df_te["Label"].values.astype(int)
 
-        windows = np.array(windows, dtype=np.float32)  # shape (N, W, D)
-        N = len(windows)
-        if N == 0:
-            raise ValueError(f"Series length {T} is too short for window size {W}")
+            elif dataset in ("msl", "smap"):
+                tr_path = os.path.join(self.dataset_dir, "NASA", "train", f"{entity}.npy")
+                te_path = os.path.join(self.dataset_dir, "NASA", "test", f"{entity}.npy")
+                if not os.path.exists(te_path):
+                    raise FileNotFoundError(f"NASA data not found for channel {entity}")
+                te_raw = np.load(te_path).astype(np.float32)
+                if os.path.exists(tr_path):
+                    tr_raw = np.load(tr_path).astype(np.float32)
+                    scaler = MinMaxScaler().fit(tr_raw)
+                    series_norm = scaler.transform(te_raw).astype(np.float32)
+                else:
+                    series_norm = MinMaxScaler().fit_transform(te_raw).astype(np.float32)
 
-        # 3. Model inference on CPU in batches
-        batch_size = 128
-        preds, pred_labels, pred_encs = [], [], []
-        with torch.no_grad():
-            for i in range(0, N, batch_size):
-                b = torch.from_numpy(windows[i:i + batch_size])
-                p, pl, pe = model(b)
-                preds.append(p.numpy())
-                pred_labels.append(pl.numpy())
-                pred_encs.append(pe.squeeze(-1).numpy())
+                nasa_meta = self._load_nasa_meta()
+                row = nasa_meta[nasa_meta["chan_id"] == entity]
+                gt_full = np.zeros(len(series_norm), dtype=int)
+                if not row.empty:
+                    seqs = ast.literal_eval(row["anomaly_sequences"].values[0])
+                    for s, e in seqs:
+                        gt_full[max(0, s):min(len(gt_full), e + 1)] = 1
 
-        preds = np.concatenate(preds, axis=0)          # (N, W, D)
-        pred_labels = np.concatenate(pred_labels, axis=0) # (N, 12)
-        pred_encs = np.concatenate(pred_encs, axis=0)     # (N, 128)
+            elif dataset == "stock":
+                stock_file = os.path.join(self.dataset_dir, "stock", f"{entity}.csv")
+                if not os.path.exists(stock_file):
+                    raise FileNotFoundError(f"Stock file not found for {entity}")
+                df_s = pd.read_csv(stock_file)
+                m_tr = re.search(r"_tr_(\d+)_", entity)
+                train_end = int(m_tr.group(1)) if m_tr else 500
+                all_vals = df_s["Data"].values.astype(np.float32).reshape(-1, 1)
+                scaler = MinMaxScaler().fit(all_vals[:train_end])
+                series_norm = scaler.transform(all_vals[train_end:]).astype(np.float32)
+                gt_full = df_s["Label"].values[train_end:].astype(int) if "Label" in df_s.columns else None
 
-        # 4. Reconstruction MSE
-        raw_mse = mse(windows.reshape(N, -1), preds.reshape(N, -1))
-        mse_conv = convolve_minmax_score(raw_mse, w=int(W / 2), minmax=False)
-        mse_minmax = convolve_minmax_score(raw_mse, w=int(W / 2), minmax=True)
+            else:
+                raise FileNotFoundError(f"Unsupported dataset: {dataset}")
 
-        # 5. Classification CE score
-        mean_label = np.mean(pred_labels, axis=0)
-        indices = np.where(mean_label > ce_threshold)[0]
+            step = 10
+            eval_step = step
+            if len(series_norm) < W:
+                pad_n = W - len(series_norm)
+                series_norm = np.vstack([np.tile(series_norm[0:1], (pad_n, 1)), series_norm])
+                if gt_full is not None:
+                    gt_full = np.concatenate([np.zeros(pad_n, dtype=int), gt_full])
+
+            input_3d = np.lib.stride_tricks.sliding_window_view(series_norm, (W, D)).squeeze(1)[::step].copy()
+            inp_last = input_3d[:, -1, :]
+            if gt_full is not None:
+                gt_labels = align_labels_centre(gt_full, len(input_3d), window=W, step=step)
+
+            pred_3d, pred_label = self._run_batched_inference(model, input_3d)
+            mse = np.mean((input_3d - pred_3d) ** 2, axis=(1, 2))
+            anomaly_score = anomaly_scoreing(input_3d, pred_3d, pred_label, threshold=0.05)
+            label = None
+
+        mean_label = np.mean(pred_label, axis=0)
+        indices = np.where(mean_label > 0.05)[0]
         if 0 not in indices:
             indices = np.insert(indices, 0, 0)
-        indices = np.array(indices, dtype=int)
 
-        raw_ce = label_score_selected_feature(pred_labels, axis=indices)
-        ce_conv = convolve_minmax_score(raw_ce, w=int(W / 2), minmax=False)
-        ce_minmax = convolve_minmax_score(raw_ce, w=int(W / 2), minmax=True)
+        l_copy = np.copy(pred_label)
+        l_copy[:, indices] = 0
+        ce_score = np.sum(l_copy, axis=1)
+        raw_score = (mse + ce_score) / 2.0
 
-        # 6. Combined RedLamp score (normalized across whole sequence)
-        final_anomaly_score = (mse_minmax + ce_minmax) / 2.0
+        th_995 = float(np.percentile(raw_score, 99.5))
+        th_990 = float(np.percentile(raw_score, 99.0))
+        th_950 = float(np.percentile(raw_score, 95.0))
 
-        # 7. Raw reference score distribution & Thresholding
-        # Reference windows: windows ending within [:n_train]
-        ref_window_count = max(1, sum(1 for idx in window_indices if idx < n_train))
-        ref_raw_mse = raw_mse[:ref_window_count]
-        ref_raw_ce = raw_ce[:ref_window_count]
+        max_idx = int(np.argmax(anomaly_score))
+        low_score_indices = np.where(anomaly_score < np.percentile(anomaly_score, 10))[0]
+        normal_idx = int(low_score_indices[len(low_score_indices) // 2]) if len(low_score_indices) > 0 else 0
 
-        # Standardized raw combined score relative to normal reference period
-        mu_mse, std_mse = float(np.mean(ref_raw_mse)), float(np.std(ref_raw_mse)) + 1e-8
-        mu_ce, std_ce = float(np.mean(ref_raw_ce)), float(np.std(ref_raw_ce)) + 1e-8
+        feat_min = np.min(inp_last, axis=0).tolist()
+        feat_max = np.max(inp_last, axis=0).tolist()
+        feat_median = np.median(inp_last, axis=0).tolist()
 
-        z_mse = (raw_mse - mu_mse) / std_mse
-        z_ce = (raw_ce - mu_ce) / std_ce
-        raw_combined_score = (z_mse + z_ce) / 2.0
-
-        ref_combined = raw_combined_score[:ref_window_count]
-
-        # Compute detection threshold on reference
-        if threshold_type == "sigma":
-            k = float(threshold_val)
-            threshold = float(np.mean(ref_combined) + k * np.std(ref_combined))
-            threshold_desc = f"Mean + {k}σ trên {ref_window_count} cửa sổ tham chiếu ({threshold:.3f})"
-        else:  # percentile
-            p = float(threshold_val)
-            threshold = float(np.percentile(ref_combined, p))
-            threshold_desc = f"Phân vị {p}% trên {ref_window_count} cửa sổ tham chiếu ({threshold:.3f})"
-
-        flagged_windows = (raw_combined_score > threshold).astype(bool)
-
-        # 8. Contiguous flagged regions and Top-3 labels
-        flagged_regions = []
-        in_region = False
-        r_start = 0
-
-        for i, flagged in enumerate(flagged_windows):
-            if flagged and not in_region:
-                in_region = True
-                r_start = i
-            elif not flagged and in_region:
-                in_region = False
-                flagged_regions.append((r_start, i - 1))
-        if in_region:
-            flagged_regions.append((r_start, N - 1))
-
-        # Determine class for each region
-        regions_info = []
-        for s_idx, e_idx in flagged_regions:
-            region_probs = np.mean(pred_labels[s_idx:e_idx + 1], axis=0)  # shape (12,)
-            # Exclude eliminated indices
-            masked_probs = np.copy(region_probs)
-            masked_probs[indices] = 0.0
-
-            best_class_idx = int(np.argmax(masked_probs))
-            best_prob = float(masked_probs[best_class_idx])
-
-            # Get sorted top-3 classes not in indices
-            valid_classes = [c for c in range(12) if c not in indices]
-            valid_classes.sort(key=lambda c: region_probs[c], reverse=True)
-            top3 = [
-                {"class_idx": c, "class_name": ANOMALY_TYPES[c], "prob": float(region_probs[c])}
-                for c in valid_classes[:3]
-            ]
-
-            label_name = ANOMALY_TYPES[best_class_idx] if best_prob > 0.02 else "Không xác định"
-
-            start_t = int(window_indices[s_idx])
-            end_t = int(window_indices[e_idx])
-
-            regions_info.append({
-                "window_start": s_idx,
-                "window_end": e_idx,
-                "time_start": start_t,
-                "time_end": end_t,
-                "label": label_name,
-                "max_prob": best_prob,
-                "top3": top3
-            })
-
-        # Overall summary
-        has_anomaly = len(flagged_regions) > 0
-        total_flagged_windows = int(np.sum(flagged_windows))
-        flagged_pct = (total_flagged_windows / N) * 100.0
-
-        if has_anomaly:
-            conclusion = "Có bất thường"
-            confidence = min(99.9, max(50.0, 50.0 + (flagged_pct * 1.5) + (float(np.max(raw_combined_score) - threshold) * 5.0)))
-            # Global top 3 across all flagged windows
-            flagged_indices_list = np.where(flagged_windows)[0]
-            avg_flagged_probs = np.mean(pred_labels[flagged_indices_list], axis=0)
-            valid_classes = [c for c in range(12) if c not in indices]
-            valid_classes.sort(key=lambda c: avg_flagged_probs[c], reverse=True)
-            overall_top3 = [
-                {"class_idx": c, "class_name": ANOMALY_TYPES[c], "prob": float(avg_flagged_probs[c])}
-                for c in valid_classes[:3]
-            ]
-        else:
-            conclusion = "Không có bất thường"
-            confidence = 95.0
-            overall_top3 = []
-
-        # 9. 2D PCA projection of latent space
-        # Downsample PCA input if N > 5000 for fast browser rendering
-        stride_pca = max(1, N // 2000)
-        pca = PCA(n_components=2)
-        pca_coords = pca.fit_transform(pred_encs[::stride_pca])
-        pca_indices = list(range(0, N, stride_pca))
-
-        # Downsample series visualization points if T > 5000 to keep UI responsive
-        stride_disp = max(1, T // 3000)
-        disp_time = list(range(0, T, stride_disp))
-        disp_series_raw = series_data[::stride_disp, 0].tolist()
-        disp_series_norm = series_norm[::stride_disp, 0].tolist()
-        disp_labels = labels[::stride_disp].tolist() if labels is not None else None
-
-        stride_win = max(1, N // 2500)
-        win_disp_indices = list(range(0, N, stride_win))
-        disp_window_t = [int(window_indices[i]) for i in win_disp_indices]
-
-        return {
-            "model_id": model_id,
-            "conclusion": conclusion,
-            "confidence": round(confidence, 1),
-            "has_anomaly": has_anomaly,
-            "overall_top3": overall_top3,
-            "threshold_desc": threshold_desc,
-            "threshold": threshold,
-            "threshold_type": threshold_type,
-            "threshold_val": threshold_val,
-            "n_train": n_train,
-            "W": W,
-            "D": D,
-            "total_points": T,
-            "total_windows": N,
-            "indices_excluded": indices.tolist(),
-            "indices_excluded_names": [ANOMALY_TYPES[i] for i in indices.tolist()],
-            "flagged_regions": regions_info,
-            "flagged_pct": round(flagged_pct, 2),
-            "display": {
-                "disp_time": disp_time,
-                "disp_series_raw": disp_series_raw,
-                "disp_series_norm": disp_series_norm,
-                "disp_labels": disp_labels,
-                "win_disp_indices": win_disp_indices,
-                "disp_window_t": disp_window_t,
-                "raw_mse": [float(raw_mse[i]) for i in win_disp_indices],
-                "mse_conv": [float(mse_conv[i]) for i in win_disp_indices],
-                "mse_minmax": [float(mse_minmax[i]) for i in win_disp_indices],
-                "raw_ce": [float(raw_ce[i]) for i in win_disp_indices],
-                "ce_conv": [float(ce_conv[i]) for i in win_disp_indices],
-                "ce_minmax": [float(ce_minmax[i]) for i in win_disp_indices],
-                "raw_combined_score": [float(raw_combined_score[i]) for i in win_disp_indices],
-                "anomaly_score": [float(final_anomaly_score[i]) for i in win_disp_indices],
-                "flagged_windows": [bool(flagged_windows[i]) for i in win_disp_indices],
-                "pca_x": [float(pt[0]) for pt in pca_coords],
-                "pca_y": [float(pt[1]) for pt in pca_coords],
-                "pca_indices": pca_indices,
-                "pred_label_sampled": [pred_labels[i].tolist() for i in win_disp_indices]
-            }
-        }
-
-    def get_window_detail(self, model_id, series_data, window_idx, n_train=500):
-        """Retrieves exact reconstruction, pred_label, and errors for a specific window index."""
-        model, params = self.get_model(model_id)
-        W = params.n_time
-        D = params.n_features
-
-        if series_data.ndim == 1:
-            series_data = series_data.reshape(-1, 1)
-        if series_data.shape[1] > D:
-            series_data = series_data[:, :D]
-        elif series_data.shape[1] < D:
-            pad = np.zeros((len(series_data), D - series_data.shape[1]))
-            series_data = np.hstack([series_data, pad])
-
-        scaler = MinMaxScaler()
-        scaler.fit(series_data[:n_train])
-        series_norm = scaler.transform(series_data)
-
-        window_idx = max(0, min(window_idx, len(series_norm) - W))
-        win_data = series_norm[window_idx:window_idx + W] # (W, D)
-
-        b = torch.from_numpy(win_data).unsqueeze(0).float()
-        with torch.no_grad():
-            p, pl, pe = model(b)
-
-        p = p.squeeze(0).numpy() # (W, D)
-        pl = pl.squeeze(0).numpy().tolist() # (12,)
-        sq_err = np.mean((win_data - p) ** 2, axis=-1).tolist() # (W,)
-
-        return {
-            "window_idx": window_idx,
-            "time_start": window_idx,
-            "time_end": window_idx + W - 1,
-            "input_norm": win_data[:, 0].tolist(),
-            "pred_norm": p[:, 0].tolist(),
-            "squared_error": sq_err,
-            "pred_label": pl,
-            "classes": ANOMALY_TYPES
-        }
-
-    def predict_custom_point(self, model_id, feature_values):
-        """
-        Runs model inference on a single custom point or 5-feature input.
-        Constructs a stationary/synthetic context window with the user's features at the center/end.
-        """
-        model, params = self.get_model(model_id)
-        W = params.n_time
-        D = params.n_features
-
-        # Construct a window of shape (1, W, D)
-        base_window = np.zeros((1, W, D), dtype=np.float32)
-        # Fill features
-        for f_idx, val in enumerate(feature_values[:D]):
-            base_window[0, :, f_idx] = float(val)
-
-        b = torch.from_numpy(base_window)
-        with torch.no_grad():
-            p, pl, pe = model(b)
-
-        probs = pl.squeeze(0).numpy().tolist()
-        reconstruction = p.squeeze(0).numpy()[:, 0].tolist()
-
-        # Sort classes
-        sorted_classes = sorted(
-            [{"name": ANOMALY_TYPES[i], "prob": float(probs[i])} for i in range(len(ANOMALY_TYPES))],
-            key=lambda x: x["prob"],
-            reverse=True
+        computed_metrics = self._resolve_paper_metrics(
+            dataset=dataset,
+            entity=entity,
+            scores=anomaly_score,
+            gt_aligned=gt_labels,
+            window=W,
+            step=eval_step,
         )
 
-        return {
-            "reconstruction_sample": reconstruction[:20],
-            "pred_label": probs,
-            "sorted_classes": sorted_classes,
-            "top1": sorted_classes[0],
-            "top3": sorted_classes[:3]
+        data_dict = {
+            "test_dir": test_dir or "live_dataset_eval",
+            "length": len(anomaly_score),
+            "anomaly_score": anomaly_score,
+            "mse": mse,
+            "pred_label": pred_label,
+            "inp_last": inp_last,
+            "input_3d": input_3d,
+            "label": label,
+            "indices": indices.tolist(),
+            "mean_label": mean_label.tolist(),
+            "raw_score": raw_score,
+            "threshold_995": th_995,
+            "threshold_990": th_990,
+            "threshold_950": th_950,
+            "default_threshold": th_995,
+            "max_anomaly_idx": max_idx,
+            "normal_idx": normal_idx,
+            "feat_min": feat_min,
+            "feat_max": feat_max,
+            "feat_median": feat_median,
+            "computed_metrics": computed_metrics,
+            "paper_ref": PAPER_REFERENCE.get(dataset),
+            "metrics_is_vus": True,
+        }
+        self.data_cache[key] = data_dict
+        return data_dict
+
+    def get_window(self, data_dict: Dict[str, Any], t: int) -> np.ndarray:
+        if data_dict["input_3d"] is not None:
+            t_clamped = max(0, min(t, len(data_dict["input_3d"]) - 1))
+            return data_dict["input_3d"][t_clamped]
+
+        inp_last = data_dict["inp_last"]
+        N, _ = inp_last.shape
+        t_clamped = max(0, min(t, N - 1))
+        start = t_clamped - 99
+        if start >= 0:
+            return inp_last[start : t_clamped + 1]
+        pad_count = -start
+        pad = np.tile(inp_last[0:1], (pad_count, 1))
+        actual = inp_last[0 : t_clamped + 1]
+        return np.vstack([pad, actual])
+
+    def predict_point(
+        self,
+        dataset: str,
+        entity: str,
+        seed: int,
+        point: List[float],
+        context_type: str = "sample_last",
+        custom_history: Optional[List[List[float]]] = None,
+        threshold_override: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        model, params = self.load_model(dataset, entity, 0)
+        data_dict = self.load_entity_data(dataset, entity, 0)
+
+        D = params.n_features
+        pt = np.array(point[:D] if len(point) >= D else point + [0.0] * (D - len(point)), dtype=np.float32).reshape(1, D)
+
+        if context_type == "sample_last":
+            if data_dict["input_3d"] is not None:
+                context = data_dict["input_3d"][-1, 1:, :]
+            else:
+                context = data_dict["inp_last"][-99:, :]
+                if len(context) < 99:
+                    pad = np.tile(context[0:1], (99 - len(context), 1))
+                    context = np.vstack([pad, context])
+        elif context_type == "median":
+            median = np.array(data_dict["feat_median"], dtype=np.float32).reshape(1, D)
+            context = np.tile(median, (99, 1))
+        elif context_type == "custom" and custom_history:
+            c_arr = np.array(custom_history, dtype=np.float32)
+            if c_arr.ndim == 1:
+                c_arr = c_arr.reshape(-1, D)
+            if len(c_arr) >= 99:
+                context = c_arr[-99:, :D]
+            else:
+                pad = np.tile(c_arr[0:1, :D], (99 - len(c_arr), 1))
+                context = np.vstack([pad, c_arr[:, :D]])
+        else:
+            median = np.array(data_dict["feat_median"], dtype=np.float32).reshape(1, D)
+            context = np.tile(median, (99, 1))
+
+        window = np.vstack([context, pt])
+        window_tensor = torch.tensor(window, dtype=torch.float32).unsqueeze(0)
+
+        with torch.no_grad():
+            x_hat, x_out, _ = model(window_tensor)
+
+        reconstructed = x_hat.squeeze(0).cpu().numpy()
+        pred_probs = x_out.squeeze(0).cpu().numpy()
+
+        raw_mse = float(np.mean((window - reconstructed) ** 2))
+        indices = set(data_dict["indices"])
+        raw_ce = float(sum(pred_probs[j] for j in range(12) if j not in indices))
+        raw_combined = float((raw_mse + raw_ce) / 2.0)
+
+        th = threshold_override if threshold_override is not None else data_dict["default_threshold"]
+        is_anomaly = raw_combined > th
+
+        allowed_classes = [
+            {"index": j, "label": ANOMALY_TYPES[j], "name_vi": PSEUDO_ANOMALY_INFO[j]["name_vi"], "prob": float(pred_probs[j])}
+            for j in range(12) if j not in indices
+        ]
+        allowed_classes.sort(key=lambda x: x["prob"], reverse=True)
+        top3 = allowed_classes[:3]
+
+        if is_anomaly:
+            winner_idx = allowed_classes[0]["index"] if allowed_classes else int(np.argmax(pred_probs))
+        else:
+            winner_idx = 0
+        winner_meta = PSEUDO_ANOMALY_INFO[winner_idx]
+        predicted_group = {
+            "index": winner_idx,
+            "name": winner_meta["name"],
+            "name_vi": winner_meta["name_vi"],
+            "desc_vi": winner_meta["desc_vi"],
+            "prob": float(pred_probs[winner_idx]),
+            "is_anomaly": is_anomaly,
+            "reason": (
+                f"Đạt xác suất cao nhất ({pred_probs[winner_idx]*100:.1f}%) trong các lớp bất thường hợp lệ"
+                if is_anomaly else "Điểm kết hợp thô nằm dưới ngưỡng phân vị 99,5%, tín hiệu ổn định."
+            ),
         }
 
+        all_classes = []
+        for j in range(12):
+            meta = PSEUDO_ANOMALY_INFO[j]
+            is_ex = j in indices
+            r_str = ""
+            if is_ex:
+                r_str = "Lớp bình thường (luôn loại trừ)" if j == 0 else f"Xác suất trung bình toàn chuỗi ({data_dict['mean_label'][j]:.3f}) > ngưỡng 0,05"
+            all_classes.append({
+                "index": j,
+                "name": meta["name"],
+                "name_vi": meta["name_vi"],
+                "desc_vi": meta["desc_vi"],
+                "prob": float(pred_probs[j]),
+                "excluded": is_ex,
+                "reason": r_str,
+                "is_winner": (j == winner_idx),
+            })
+
+        excluded_info = []
+        for idx in sorted(list(indices)):
+            label_name = ANOMALY_TYPES[idx]
+            reason = (
+                "Lớp bình thường (luôn loại trừ)"
+                if idx == 0 else f"Xác suất trung bình toàn chuỗi ({data_dict['mean_label'][idx]:.3f}) > ngưỡng 0,05"
+            )
+            excluded_info.append({
+                "index": idx,
+                "label": label_name,
+                "prob": float(pred_probs[idx]),
+                "reason": reason,
+            })
+
+        return {
+            "raw_mse": raw_mse,
+            "raw_ce": raw_ce,
+            "raw_combined": raw_combined,
+            "threshold": th,
+            "is_anomaly": is_anomaly,
+            "conclusion": "BẤT THƯỜNG" if is_anomaly else "BÌNH THƯỜNG",
+            "predicted_group": predicted_group,
+            "all_classes": all_classes,
+            "top3": top3,
+            "excluded_classes": excluded_info,
+            "window_input": window.tolist(),
+            "custom_window": window.tolist(),
+            "reconstructed": reconstructed.tolist(),
+            "new_point": point,
+            "explanation": f"MSE đạt {raw_mse:.4f}, điểm phân loại {raw_ce:.4f}, ngưỡng {th:.4f} (phân vị 99,5).",
+        }
+
+    def explain(
+        self,
+        dataset: str,
+        entity: str,
+        seed: int,
+        t: Optional[int] = None,
+        custom_window: Optional[List[List[float]]] = None,
+        point: Optional[List[float]] = None,
+        is_custom_point: bool = False,
+    ) -> Dict[str, Any]:
+        model, params = self.load_model(dataset, entity, 0)
+        data_dict = self.load_entity_data(dataset, entity, 0)
+        indices = set(data_dict["indices"])
+
+        normal_t = data_dict["normal_idx"]
+        win_normal = self.get_window(data_dict, normal_t)
+
+        if is_custom_point and custom_window is not None:
+            win_target = np.array(custom_window, dtype=np.float32)
+            t = 99
+        else:
+            if t is None:
+                t = data_dict["max_anomaly_idx"]
+            t = max(0, min(t, data_dict["length"] - 1))
+            win_target = self.get_window(data_dict, t)
+
+        activations_target: Dict[str, np.ndarray] = {}
+        hook_shapes: List[Tuple[str, List[int]]] = []
+        hooks = []
+        for i, blk in enumerate(model.encoder.network):
+            def make_hook(idx, name):
+                def hook(m, inp, outp):
+                    activations_target[name] = outp.detach().cpu().numpy()
+                    hook_shapes.append((f"ConvBlock {idx} (stride 2)", list(outp.shape)))
+                return hook
+            hooks.append(blk.register_forward_hook(make_hook(i, f"conv_{i}")))
+
+        win_t_tensor = torch.tensor(win_target, dtype=torch.float32).unsqueeze(0)
+        win_n_tensor = torch.tensor(win_normal, dtype=torch.float32).unsqueeze(0)
+
+        with torch.no_grad():
+            x_hat_t, x_out_t, x_enc_t = model(win_t_tensor)
+
+        for h in hooks:
+            h.remove()
+
+        with torch.no_grad():
+            x_hat_n, x_out_n, _ = model(win_n_tensor)
+
+        rec_target = x_hat_t.squeeze(0).cpu().numpy()
+        rec_normal = x_hat_n.squeeze(0).cpu().numpy()
+        probs_target = x_out_t.squeeze(0).cpu().numpy()
+        probs_normal = x_out_n.squeeze(0).cpu().numpy()
+        embedding_target = x_enc_t.squeeze().cpu().numpy().tolist()
+
+        conv_shapes = [{"layer": "Cửa sổ đầu vào", "shape": f"[1, {params.n_time}, {params.n_features}]"}]
+        for lname, shp in hook_shapes:
+            conv_shapes.append({"layer": lname, "shape": str(shp)})
+        if hook_shapes:
+            last_ch = hook_shapes[-1][1][1]
+            conv_shapes.append({"layer": "MaxPool1D (to length 1)", "shape": f"[1, {last_ch}, 1]"})
+        conv_shapes.append({"layer": "Conv1x1 -> Embedding", "shape": str(list(x_enc_t.shape))})
+
+        conv_heatmap_summary = {}
+        for k, v in activations_target.items():
+            conv_heatmap_summary[k] = np.mean(np.abs(v[0]), axis=1).tolist()[:32]
+
+        err_sq_target = np.mean((win_target - rec_target) ** 2, axis=1).tolist()
+        err_sq_normal = np.mean((win_normal - rec_normal) ** 2, axis=1).tolist()
+        mse_target = float(np.mean(err_sq_target))
+        mse_normal = float(np.mean(err_sq_normal))
+
+        raw_mse_val = mse_target
+        raw_ce_val = float(sum(probs_target[j] for j in range(12) if j not in indices))
+        raw_comb_val = float((raw_mse_val + raw_ce_val) / 2.0)
+        th = data_dict["default_threshold"]
+        is_anomaly = raw_comb_val > th
+
+        if is_anomaly:
+            allowed_cand = [j for j in range(12) if j not in indices]
+            winner_idx = max(allowed_cand, key=lambda j: probs_target[j]) if allowed_cand else int(np.argmax(probs_target))
+        else:
+            winner_idx = 0
+        winner_meta = PSEUDO_ANOMALY_INFO[winner_idx]
+
+        classes_target = []
+        classes_normal = []
+        for j in range(12):
+            is_ex = j in indices
+            r_str = ""
+            if is_ex:
+                r_str = "Lớp bình thường" if j == 0 else f"Trung bình chuỗi ({data_dict['mean_label'][j]:.3f}) > 0.05"
+            classes_target.append({
+                "label": ANOMALY_TYPES[j],
+                "name_vi": PSEUDO_ANOMALY_INFO[j]["name_vi"],
+                "desc_vi": PSEUDO_ANOMALY_INFO[j]["desc_vi"],
+                "prob": float(probs_target[j]),
+                "excluded": is_ex,
+                "reason": r_str,
+                "is_winner": (j == winner_idx),
+            })
+            classes_normal.append({
+                "label": ANOMALY_TYPES[j],
+                "name_vi": PSEUDO_ANOMALY_INFO[j]["name_vi"],
+                "desc_vi": PSEUDO_ANOMALY_INFO[j]["desc_vi"],
+                "prob": float(probs_normal[j]),
+                "excluded": is_ex,
+                "reason": r_str,
+                "is_winner": (j == 0),
+            })
+
+        if is_custom_point:
+            time_axis = list(range(100))
+            input_slice = win_target[:, 0].tolist()
+            history_len = min(50, len(data_dict["raw_score"]))
+            score_slice_rec = data_dict["mse"][-history_len:].tolist() + [raw_mse_val]
+            l_sub = np.copy(data_dict["pred_label"][-history_len:])
+            l_sub[:, list(indices)] = 0
+            score_slice_ce = np.sum(l_sub, axis=1).tolist() + [raw_ce_val]
+            raw_slice_combined = data_dict["raw_score"][-history_len:].tolist() + [raw_comb_val]
+            score_slice_final = data_dict["anomaly_score"][-history_len:].tolist() + [min(1.0, raw_comb_val / max(1e-5, th * 1.5))]
+            final_rel_val = score_slice_final[-1]
+
+            explanations = [
+                "Cửa sổ 100 điểm với điểm nạp mới tại vị trí t=99 được đưa vào phân tích.",
+                "Embedding 128 chiều nén đặc trưng không gian của cửa sổ điểm nạp qua các tầng tích chập.",
+                f"Sai số tái tạo tại điểm nạp MSE = {mse_target:.4f} (cửa sổ chuẩn đối chứng là {mse_normal:.4f}).",
+                f"Điểm nạp được phân loại vào nhóm bất thường giả '{winner_meta['name_vi']}' đạt xác suất {probs_target[winner_idx]*100:.1f}%.",
+                f"Điểm kết hợp {raw_comb_val:.3f} ({'vượt ngưỡng ' + f'{th:.3f} (bất thường)' if is_anomaly else 'dưới ngưỡng ' + f'{th:.3f} (chuẩn)'}), phân loại giả lập tham khảo."
+            ]
+        else:
+            slice_start = max(0, t - 150)
+            slice_end = min(data_dict["length"], t + 150)
+            time_axis = list(range(slice_start, slice_end))
+            input_slice = data_dict["inp_last"][slice_start:slice_end, 0].tolist()
+
+            score_slice_rec = data_dict["mse"][slice_start:slice_end].tolist()
+            l_sub = np.copy(data_dict["pred_label"][slice_start:slice_end])
+            l_sub[:, list(indices)] = 0
+            score_slice_ce = np.sum(l_sub, axis=1).tolist()
+            score_slice_final = data_dict["anomaly_score"][slice_start:slice_end].tolist()
+            raw_slice_combined = data_dict["raw_score"][slice_start:slice_end].tolist()
+            final_rel_val = float(data_dict["anomaly_score"][t])
+
+            explanations = [
+                f"Cửa sổ 100 điểm tại vị trí t={t} được tô sáng trên chuỗi dữ liệu gốc.",
+                "Embedding 128 chiều biểu diễn đặc trưng nén của cửa sổ sau 4 tầng tích chập.",
+                f"Sai số tái tạo MSE = {mse_target:.4f} ở cửa sổ khảo sát (so với {mse_normal:.4f} ở cửa sổ chuẩn).",
+                "Phân loại xác suất 12 lớp bất thường giả định, loại bỏ lớp bình thường và lớp nhiễu.",
+                f"Điểm cuối = ({raw_mse_val:.3f} + {raw_ce_val:.3f})/2 = {raw_comb_val:.3f}, đối chiếu ngưỡng phân vị 99,5 ({th:.3f})."
+            ]
+
+        return {
+            "t": t,
+            "normal_t": normal_t,
+            "is_custom_point": is_custom_point,
+            "new_point": point,
+            "winner_group": {
+                "index": winner_idx,
+                "name": winner_meta["name"],
+                "name_vi": winner_meta["name_vi"],
+                "desc_vi": winner_meta["desc_vi"],
+                "prob": float(probs_target[winner_idx]),
+                "is_anomaly": is_anomaly,
+            },
+            "window_size": params.n_time,
+            "n_features": params.n_features,
+            "time_slice": time_axis,
+            "input_slice": input_slice,
+            "win_target": win_target[:, 0].tolist(),
+            "win_normal": win_normal[:, 0].tolist(),
+            "rec_target": rec_target[:, 0].tolist(),
+            "rec_normal": rec_normal[:, 0].tolist(),
+            "err_sq_target": err_sq_target,
+            "err_sq_normal": err_sq_normal,
+            "mse_target": mse_target,
+            "mse_normal": mse_normal,
+            "conv_shapes": conv_shapes,
+            "conv_heatmap": conv_heatmap_summary,
+            "embedding": embedding_target,
+            "classes_target": classes_target,
+            "classes_normal": classes_normal,
+            "score_rec_slice": score_slice_rec,
+            "score_ce_slice": score_slice_ce,
+            "score_final_slice": score_slice_final,
+            "raw_comb_slice": raw_slice_combined,
+            "threshold": th,
+            "raw_mse": float(raw_mse_val),
+            "raw_ce": raw_ce_val,
+            "raw_combined": raw_comb_val,
+            "final_relative": final_rel_val,
+            "explanations": explanations,
+        }

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>RedLamp Demo - Phát hiện bất thường chuỗi thời gian</title>
+  <link rel="stylesheet" href="/static/style.css?v=20261119_v3_noseed">
+</head>
+
+<body>
+  <!-- Compact Unified Topbar -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="brand">
+        <h1>REDLAMP DEMO</h1>
+        <p class="subtitle">Phát hiện bất thường chuỗi thời gian không giám sát (Pre-trained ConvAEC)</p>
+      </div>
+
+      <!-- Navigation Tabs integrated in Header -->
+      <nav class="app-tabs">
+        <button class="tab-btn active" data-tab="tab-pretrain">1. Tổng quan</button>
+        <button class="tab-btn" data-tab="tab-explain">2. Giải thích mô hình</button>
+        <button class="tab-btn" data-tab="tab-predict">3. Thử nghiệm dự đoán</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- TAB 1: PRETRAIN SELECTION -->
+    <section id="tab-pretrain" class="tab-content active">
+      <div class="card selector-card">
+        <div class="selector-header-row">
+          <h2>Bộ chọn Dataset &amp; Entity</h2>
+        </div>
+        <div class="selector-grid">
+          <div class="form-group">
+            <label for="select-dataset">1. Tập dữ liệu (Dataset):</label>
+            <select id="select-dataset" class="form-control">
+              <option value="smd">SMD (Server Machine Dataset - 38 đặc trưng)</option>
+              <option value="iops">AIOps / IOPS (1 đặc trưng)</option>
+              <option value="msl">MSL (Mars Science Laboratory - 55 đặc trưng)</option>
+              <option value="smap">SMAP (Soil Moisture Active Passive - 25 đặc trưng)</option>
+              <option value="anomaly_archive">UCR (Anomaly Archive 250 thực thể - 1 đặc trưng)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="btn-entity-picker">2. Thực thể (Entity):</label>
+            <div class="entity-picker-wrap" id="wrap-entity-picker">
+              <button type="button" class="entity-picker-btn" id="btn-entity-picker">
+                <span class="entity-picker-lbl" id="lbl-entity-picker">ALL</span>
+                <span class="feature-picker-caret">▾</span>
+              </button>
+              <div class="entity-picker-popover" id="popover-entity-picker" style="display:none;">
+                <div class="ep-top-bar">
+                  <input type="text" class="ep-search-input" id="input-entity-picker-search"
+                    placeholder="Tìm nhanh thực thể..." autocomplete="off">
+                  <button type="button" class="ep-all-btn active" id="btn-entity-pick-all">ALL</button>
+                </div>
+                <div class="ep-section-meta" id="lbl-entity-picker-count">Danh sách thực thể</div>
+                <div class="ep-chip-grid cols-3" id="grid-entity-picker"></div>
+              </div>
+            </div>
+            <select id="select-entity" class="form-control" style="display:none;"></select>
+            <!-- Hidden fallback for backward compatibility with cached client scripts expecting select-seed -->
+            <select id="select-seed" class="form-control" style="display:none;" aria-hidden="true">
+              <option value="0" selected>0</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Metrics Card (Full Width) -->
+      <div class="card compact-card metrics-full-card">
+        <div class="card-header-flex">
+          <h3>Kết quả đánh giá chất lượng (Metrics)</h3>
+          <p class="text-muted" id="metrics-subtitle" style="font-size: 13.5px; font-weight: 600;">Chỉ số trên tập
+            kiểm tra thực tế:</p>
+        </div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-title">VUS-ROC</div>
+            <div class="metric-main-val" id="metric-vus-roc">--</div>
+            <div class="metric-sub-val" id="metric-vus-roc-sub">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-title">VUS-PR</div>
+            <div class="metric-main-val" id="metric-vus-pr">--</div>
+            <div class="metric-sub-val" id="metric-vus-pr-sub">--</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-title">RF (Range F-score)</div>
+            <div class="metric-main-val" id="metric-rf">--</div>
+            <div class="metric-sub-val" id="metric-rf-sub">--</div>
+          </div>
+        </div>
+        <div class="metrics-footnote">
+          * Toàn bộ kết quả thực nghiệm được trích xuất trực tiếp từ kết quả thực nghiệm (seed = 0) lưu trên Google Drive của nhóm nghiên cứu.
+        </div>
+      </div>
+
+      <!-- Series / All-Entity Overview Canvas -->
+      <div class="card flex-chart-card">
+        <div class="card-header-flex">
+          <div>
+            <h3 id="overview-card-title" style="display:inline-block; margin-right: 12px;">Tổng quan toàn bộ chuỗi thời
+              gian của Entity</h3>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div id="group-overview-metric" style="display:none; align-items:center; gap:6px;">
+              <label for="select-overview-metric"
+                style="font-size:13px; font-weight:600; color:#334155; margin:0; white-space:nowrap;">Chỉ số:</label>
+              <select id="select-overview-metric" class="form-control"
+                style="height:28px; padding:2px 8px; font-size:13px; width:auto; min-width:165px;">
+                <option value="vus_pr">VUS-PR (Thước đo chính)</option>
+                <option value="vus_roc">VUS-ROC</option>
+                <option value="rf">RF (Range F-score)</option>
+              </select>
+            </div>
+            <div id="group-overview-feature" style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:13px; font-weight:600; color:#334155; white-space:nowrap;">Tín hiệu hiển
+                thị:</span>
+              <div class="feature-picker-wrap" id="wrap-feature-picker">
+                <button type="button" class="feature-picker-btn" id="btn-feature-picker">
+                  <span id="lbl-feature-picker">Đặc trưng D1</span>
+                  <span class="feature-picker-caret">▾</span>
+                </button>
+                <div class="feature-picker-popover" id="popover-feature-picker" style="display:none;"></div>
+              </div>
+            </div>
+            <button class="btn btn-xs btn-outline" id="btn-export-overview">Tải PNG</button>
+          </div>
+        </div>
+        <div class="canvas-container flex-canvas">
+          <canvas id="canvas-overview"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: EXPLAINABLE 5-MINUTE WALKTHROUGH -->
+    <section id="tab-explain" class="tab-content">
+      <!-- Walkthrough Bar + Explain Mode Banner -->
+      <div class="walkthrough-bar">
+        <div class="step-nav-controls">
+          <button id="btn-step-prev" class="btn btn-sm btn-secondary step-arrow-btn"
+            title="Bước trước (Phím ←)">◀</button>
+          <div class="step-indicators" id="step-indicators">
+            <span class="step-pill active" data-step="0">1. Đầu vào</span>
+            <span class="step-pill" data-step="1">2. Encoder</span>
+            <span class="step-pill" data-step="2">3. Decoder</span>
+            <span class="step-pill" data-step="3">4. Classifier</span>
+            <span class="step-pill" data-step="4">5. Kết hợp</span>
+          </div>
+          <button id="btn-step-next" class="btn btn-sm btn-primary step-arrow-btn" title="Bước tiếp (Phím →)">▶</button>
+        </div>
+
+        <div id="explain-mode-banner" class="explain-mode-inline">
+          <span id="explain-mode-text" class="explain-mode-text">Entity: <strong>--</strong></span>
+          <span class="badge" id="explain-mode-badge"
+            style="display: none; background: #0284c7; color: white;">Mẫu</span>
+          <button id="btn-explain-back-to-series" class="btn btn-xs btn-outline"
+            style="display: none; background: white;">
+            ◀ Chuỗi mẫu
+          </button>
+        </div>
+
+        <div class="step-meta-controls">
+          <label>t = <strong id="lbl-explain-t">--</strong></label>
+          <input type="range" id="slider-explain-t" min="0" max="1000" class="slider walkthrough-slider">
+          <button id="btn-explain-normal" class="btn btn-xs btn-outline">Cửa sổ chuẩn</button>
+          <button id="btn-explain-abnormal" class="btn btn-xs btn-outline">Đỉnh lỗi</button>
+        </div>
+      </div>
+
+      <div class="slides-wrapper">
+        <!-- SLIDE 1: INPUT WINDOW -->
+        <div class="explain-slide active" id="slide-0">
+          <div class="slide-header">
+            <div class="slide-title">Bước 1: Chuỗi thời gian &amp; Input Window (W = 100)</div>
+            <div class="slide-header-right">
+              <div class="slide-badge">Bước 1/5</div>
+              <button class="btn btn-xs btn-outline btn-export" data-canvas="canvas-slide-1">Tải PNG</button>
+            </div>
+          </div>
+          <div class="canvas-container flex-canvas">
+            <canvas id="canvas-slide-1"></canvas>
+          </div>
+          <div class="explanation-box" id="exp-text-1">
+            Đang tải dữ liệu cửa sổ...
+          </div>
+        </div>
+
+        <!-- SLIDE 2: ENCODER & EMBEDDING -->
+        <div class="explain-slide" id="slide-1">
+          <div class="slide-header">
+            <div class="slide-title">Bước 2: Encoder &amp; Bottleneck Embedding (128 chiều)</div>
+            <div class="slide-header-right">
+              <div class="classifier-legend">
+                <span class="legend-item"><span class="color-dot blue"></span> Dương (+)</span>
+                <span class="legend-item"><span class="color-dot red"></span> Âm (-)</span>
+                <span class="legend-item"><span class="color-dot lightgray"></span> Chuẩn</span>
+              </div>
+              <div class="slide-badge">Bước 2/5</div>
+              <button class="btn btn-xs btn-outline btn-export" data-canvas="canvas-slide-2">Tải PNG</button>
+            </div>
+          </div>
+          <div class="encoder-layout">
+            <div class="encoder-shapes-card">
+              <div class="chart-half-header">
+                <h4>Kiến trúc Encoder (4 khối 1D-CNN)</h4>
+                <span class="encoder-dim-hint">[B, C, T]</span>
+              </div>
+              <div class="pipeline-flow" id="pipeline-shapes"></div>
+            </div>
+            <div class="encoder-chart-card">
+              <div class="chart-half-header">
+                <h4>Vector Embedding z (d0 → d127)</h4>
+              </div>
+              <div class="canvas-container flex-canvas">
+                <canvas id="canvas-slide-2"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="explanation-box" id="exp-text-2">
+            Đang tải embedding...
+          </div>
+        </div>
+
+        <!-- SLIDE 3: DECODER RECONSTRUCTION & ANOMALY MASK -->
+        <div class="explain-slide" id="slide-2">
+          <div class="slide-header">
+            <div class="slide-title">Bước 3: Tái tạo qua Decoder, Anomaly Mask &amp; sai số MSE</div>
+            <div class="slide-header-right">
+              <button type="button" class="btn-mask-toggle" id="btn-toggle-decoder-mask"
+                title="Chuyển đổi giữa chế độ Kiểm thử (TẮT Mask) và mô phỏng Huấn luyện (BẬT Mask)">
+                <span class="mask-switch-dot"></span>
+                <span id="lbl-toggle-decoder-mask">Anomaly Mask: TẮT (Kiểm thử)</span>
+              </button>
+              <div class="decoder-mask-legend">
+                <span class="legend-item"><span class="color-dot green-keep"></span> Giữ lại (1)</span>
+                <span class="legend-item"><span class="color-dot amber-mask"></span> Che lỗi (0)</span>
+                <span class="legend-item"><span class="color-dot red-soft"></span> Độ lệch tái tạo</span>
+              </div>
+              <div class="slide-badge">Bước 3/5</div>
+              <button class="btn btn-xs btn-outline btn-export" data-canvas="canvas-slide-3-target">Tải PNG</button>
+            </div>
+          </div>
+          <div class="side-by-side-grid">
+            <div class="chart-half">
+              <div class="chart-half-header">
+                <h4>Cửa sổ khảo sát (Target)</h4>
+                <div class="stat-badge" id="badge-mse-target">MSE = --</div>
+              </div>
+              <div class="canvas-container flex-canvas">
+                <canvas id="canvas-slide-3-target"></canvas>
+              </div>
+            </div>
+            <div class="chart-half">
+              <div class="chart-half-header">
+                <h4>Cửa sổ chuẩn (Normal)</h4>
+                <div class="stat-badge" id="badge-mse-normal">MSE = --</div>
+              </div>
+              <div class="canvas-container flex-canvas">
+                <canvas id="canvas-slide-3-normal"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Decoder Anomaly Mask Summary Card -->
+          <div class="formula-card decoder-mask-card" id="decoder-mask-card">
+            <div class="mask-inspector-row">
+              <div class="formula-title" id="decoder-mask-title">CHẾ ĐỘ KIỂM THỬ (TẮT MASK):</div>
+              <div class="mask-cells-pills">
+                <span class="mask-cell-chip shape" id="mask-chip-shape">Kích thước: --</span>
+                <span class="mask-cell-chip keep" id="mask-chip-keep">Giữ lại (1): --</span>
+                <span class="mask-cell-chip zero" id="mask-chip-zero">Che lỗi (0): --</span>
+              </div>
+            </div>
+            <div class="formula-note" id="decoder-mask-note">
+              Mở toàn bộ các phần tử khi kiểm thử: sóng tái tạo đi theo quy luật chuẩn nên làm lộ rõ độ lệch tại vùng sự
+              cố.
+            </div>
+          </div>
+
+          <div class="explanation-box" id="exp-text-3">
+            Đang tính toán sai số tái tạo...
+          </div>
+        </div>
+
+        <!-- SLIDE 4: CLASSIFIER 12 CLASSES -->
+        <div class="explain-slide" id="slide-3">
+          <div class="slide-header">
+            <div class="slide-title">Bước 4: Phân loại 12 lớp Pseudo-Anomaly &amp; lọc FAA</div>
+            <div class="slide-header-right">
+              <div class="classifier-legend">
+                <span class="legend-item"><span class="color-dot red"></span> Hợp lệ</span>
+                <span class="legend-item"><span class="color-dot lightgray"></span> Đã lọc FAA (Normal / Mean Prob &gt;
+                  0.05)</span>
+              </div>
+              <div class="slide-badge">Bước 4/5</div>
+              <button class="btn btn-xs btn-outline btn-export" data-canvas="canvas-slide-4-target">Tải PNG</button>
+            </div>
+          </div>
+          <div class="side-by-side-grid">
+            <div class="chart-half">
+              <div class="chart-half-header">
+                <h4>Xác suất 12 lớp — Cửa sổ khảo sát</h4>
+                <div class="stat-badge" id="badge-top-class-target">Top: --</div>
+              </div>
+              <div class="canvas-container flex-canvas">
+                <canvas id="canvas-slide-4-target"></canvas>
+              </div>
+            </div>
+            <div class="chart-half">
+              <div class="chart-half-header">
+                <h4>Xác suất 12 lớp — Cửa sổ chuẩn</h4>
+                <div class="stat-badge" id="badge-top-class-normal">Top: --</div>
+              </div>
+              <div class="canvas-container flex-canvas">
+                <canvas id="canvas-slide-4-normal"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="explanation-box" id="exp-text-4">
+            Đang phân tích 12 lớp xác suất...
+          </div>
+        </div>
+
+        <!-- SLIDE 5: COMBINED ANOMALY SCORE -->
+        <div class="explain-slide" id="slide-4">
+          <div class="slide-header">
+            <div class="slide-title">Bước 5: Combined Score (Reconstruction + Classification)</div>
+            <div class="slide-header-right">
+              <div class="slide-badge">Bước 5/5</div>
+              <button class="btn btn-xs btn-outline btn-export" data-canvas="canvas-slide-5">Tải PNG</button>
+            </div>
+          </div>
+          <div class="canvas-container flex-canvas">
+            <canvas id="canvas-slide-5"></canvas>
+          </div>
+
+          <!-- Real-number Formula Card -->
+          <div class="formula-card" id="formula-card">
+            <div class="formula-main-row">
+              <div class="formula-title">CÔNG THỨC:</div>
+              <div class="formula-equation" id="formula-equation">
+                Raw Combined Score = (Raw MSE + Raw CE) / 2 = (-- + --) / 2 = --
+              </div>
+            </div>
+            <div class="formula-note">
+              * Toàn chuỗi chuẩn hóa Min-Max [0, 1]; cửa sổ đơn lẻ đối chiếu <strong>Raw Combined Score</strong> với
+              ngưỡng thống kê tự động <strong>μ + 3σ</strong>.
+            </div>
+          </div>
+          <div class="explanation-box" id="exp-text-5">
+            Đang tổng hợp điểm kết hợp...
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: MANUAL POINT PREDICTION -->
+    <section id="tab-predict" class="tab-content">
+      <div class="predict-layout">
+        <!-- Left Column: Input controls -->
+        <div class="card predict-left-col">
+          <div class="predict-left-header">
+            <h2>Nhập điểm mới (t = 100)</h2>
+            <p class="description">
+              Mô hình xét cửa sổ 100 bước: tự động ghép 99 bước bình thường trước đó với điểm mới tại t = 100.
+            </p>
+          </div>
+
+          <div class="form-group flex-inputs-group">
+            <div class="label-flex">
+              <label for="pt-feat-0">Thông số cảm biến (0 → 1):</label>
+              <span id="badge-modified-count" class="modified-pill" style="display: none;">Đã sửa 0 kênh</span>
+            </div>
+            <div class="pt-quick-btns">
+              <button type="button" class="btn btn-xs btn-outline" id="btn-fill-point-sample"
+                title="Điền bộ thông số vận hành chuẩn (bình thường) tại Cửa sổ chuẩn">✓ Mẫu chuẩn</button>
+              <button type="button" class="btn btn-xs btn-spike-preset" id="btn-fill-point-spike"
+                title="Tự động điền mẫu đột biến cảm biến phù hợp theo từng thực thể và tập dữ liệu">⚡ Mẫu đột biến</button>
+            </div>
+            <div id="container-point-inputs" class="point-inputs-scroll"></div>
+          </div>
+
+          <div class="predict-left-footer">
+            <button id="btn-run-predict" class="btn btn-primary btn-block">⚡ Dự đoán bất thường</button>
+          </div>
+        </div>
+
+        <!-- Right Column: Prediction Results + Window Reconstruction Chart -->
+        <div class="predict-right-col">
+          <div class="card predict-results-card">
+            <div class="card-header-flex predict-res-header">
+              <h2>Kết quả phân tích</h2>
+              <button id="btn-sync-explain-point" class="btn btn-sm btn-primary" disabled
+                title="Đồng bộ 5 bước giải thích (Encoder, Decoder, Classifier, Combined Score) theo đúng điểm nạp này">
+                🔍 Giải thích điểm này ở Tab 2 (5 bước)
+              </button>
+            </div>
+
+            <div class="predict-top-split">
+              <!-- Conclusion Box -->
+              <div class="prediction-conclusion-box" id="box-conclusion">
+                <div class="conclusion-label">KẾT LUẬN</div>
+                <div class="conclusion-badge" id="badge-conclusion">Chờ dự đoán...</div>
+                <div class="conclusion-desc" id="desc-conclusion">Nhấn nút dự đoán để chạy mô hình</div>
+              </div>
+
+              <!-- Pseudo Anomaly Classification Card -->
+              <div class="pseudo-anomaly-card" id="card-pseudo-winner">
+                <div class="pseudo-header">
+                  <span>HÌNH THÁI DỰ ĐOÁN (12 LỚP)</span>
+                  <span class="badge" id="badge-pseudo-winner">--</span>
+                </div>
+                <div id="desc-pseudo-winner" class="pseudo-desc">
+                  Nhập giá trị điểm và chạy dự đoán để xem lớp Pseudo-Anomaly tương đồng nhất.
+                </div>
+              </div>
+            </div>
+
+            <div class="scores-summary-grid">
+              <div class="score-card" title="Sai số tái tạo trung bình bình phương trên cửa sổ 100 bước">
+                <div class="sc-title">Nhánh Decoder (MSE)</div>
+                <div class="sc-val" id="res-raw-mse">--</div>
+              </div>
+              <div class="score-card" title="Tổng xác suất các lớp bất thường hợp lệ (sau lọc FAA δ = 0.05)">
+                <div class="sc-title">Nhánh Classifier (CE)</div>
+                <div class="sc-val" id="res-raw-ce">--</div>
+              </div>
+              <div class="score-card highlight" id="card-raw-comb"
+                title="Điểm bất thường kết hợp hai nhánh = (MSE + CE) / 2">
+                <div class="sc-title">Combined = (MSE + CE) / 2</div>
+                <div class="sc-val" id="res-raw-comb">--</div>
+              </div>
+              <div class="score-card" title="Ngưỡng thống kê tự động μ + 3σ (mean + 3·std) chuẩn bài báo REDLAMP">
+                <div class="sc-title">Ngưỡng tự động (μ + 3σ)</div>
+                <div class="sc-val" id="res-threshold">--</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Window Reconstruction Chart -->
+          <div class="card flex-chart-card">
+            <div class="card-header-flex">
+              <h3>Tái tạo cửa sổ 100 điểm &amp; điểm mới (t = 100)</h3>
+              <div class="chart-header-actions">
+                <select id="select-predict-chart-feat" class="form-control select-xs" style="display: none;"
+                  title="Chọn kênh cảm biến hiển thị trên đồ thị tái tạo">
+                  <option value="auto">Tự động (kênh nổi bật)</option>
+                </select>
+                <button class="btn btn-xs btn-outline" id="btn-export-predict-chart">Tải PNG</button>
+              </div>
+            </div>
+            <div class="canvas-container flex-canvas">
+              <canvas id="canvas-predict-window"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Global Loading Overlay -->
+  <div id="app-loading-overlay" class="loading-overlay" style="display: none;">
+    <div class="loading-top-bar"></div>
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <div class="loading-text-group">
+        <div id="loading-title" class="loading-title">Đang xử lý dữ liệu...</div>
+        <div id="loading-subtitle" class="loading-subtitle">Hệ thống đang nạp mô hình và tính toán, vui lòng chờ trong
+          giây lát</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/chart.js?v=20261119_v3_noseed"></script>
+  <script src="/static/app.js?v=20261119_v3_noseed"></script>
+</body>
+
+</html>

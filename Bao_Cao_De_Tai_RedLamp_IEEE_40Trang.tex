@@ -1,0 +1,1483 @@
+\documentclass[11pt,journal,onecolumn]{IEEEtran}
+% Lưu ý: Có thể chuyển đổi sang chuẩn IEEE Conference 2 cột bằng cách đổi thành:
+% \documentclass[conference]{IEEEtran}
+
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese,english]{babel}
+\usepackage[T5,T1]{fontenc}
+
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+\usepackage[a4paper,left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.25} % Giãn dòng 1.25 chuẩn báo cáo / luận văn học thuật (~40 trang A4)
+
+\usepackage[colorlinks=true,linkcolor=blue!80!black,citecolor=blue!80!black,urlcolor=blue!80!black]{hyperref}
+
+% Định dạng cho khối mã nguồn
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.97,0.98,0.99}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{gray!30}
+}
+\lstset{style=mystyle}
+
+% Thiết lập Header và Footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Báo cáo Đề tài RedLamp - UIT/VNU-HCM}}
+\fancyhead[R]{\small\textit{Phát hiện bất thường chuỗi thời gian không giám sát}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\begin{document}
+\selectlanguage{vietnamese}
+
+
+
+% =========================================================================
+
+
+
+% TRANG BÌA CHUẨN ĐẠI HỌC QUỐC GIA TP.HCM - TRƯỜNG ĐH CÔNG NGHỆ THÔNG TIN
+% TÊN GIẢNG VIÊN VÀ HỌC VIÊN / SINH VIÊN BỎ TRỐNG THEO YÊU CẦU
+% =========================================================================
+\begin{titlepage}
+\begin{center}
+    \large \textbf{ĐẠI HỌC QUỐC GIA THÀNH PHỐ HỒ CHÍ MINH}\\
+    \large \textbf{TRƯỜNG ĐẠI HỌC CÔNG NGHỆ THÔNG TIN}\\
+    \large \textbf{KHOA KHOA HỌC MÁY TÍNH}\\
+    \large \textit{PHÒNG THÍ NGHIỆM TRÍ TUỆ NHÂN TẠO \& HỆ THỐNG THÔNG MINH}
+    
+    \vspace{2.0cm}
+    \rule{\linewidth}{1.5pt}
+    
+    \vspace{0.8cm}
+    {\Large \textbf{BÁO CÁO TỔNG KẾT ĐỀ TÀI NGHIÊN CỨU KHOA HỌC \& KHÓA LUẬN TỐT NGHIỆP}\par}
+    \vspace{0.5cm}
+    {\large \textbf{CHUYÊN NGÀNH: KHOA HỌC MÁY TÍNH / TRÍ TUỆ NHÂN TẠO}\par}
+    
+    \vspace{1.2cm}
+    {\LARGE \textbf{NGHIÊN CỨU, CẢI TIẾN VÀ XÂY DỰNG HỆ THỐNG PHÁT HIỆN BẤT THƯỜNG CHUỖI THỜI GIAN KHÔNG GIÁM SÁT DỰA TRÊN TỰ MÃ HÓA TÍCH CHẬP VÀ PHÂN LOẠI HÌNH THÁI BẤT THƯỜNG GIẢ LẬP ĐA LỚP (REDLAMP)}\par}
+    
+    \vspace{0.4cm}
+    {\large \textit{(Robust and Explainable Detector of Time Series Anomaly via Augmenting Multiclass Pseudo-Anomalies - RedLamp)}\par}
+    
+    \rule{\linewidth}{1.5pt}
+    
+    \vspace{2.0cm}
+    \begin{minipage}[t]{0.48\textwidth}
+        \textbf{GIẢNG VIÊN HƯỚNG DẪN:}\\
+        \vspace{0.3cm}
+        \underline{\hspace{6.0cm}}\\
+        \textit{Khoa Khoa học Máy tính}\\
+        \textit{Trường ĐH Công nghệ Thông tin, ĐHQG-HCM}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.48\textwidth}
+        \textbf{NHÓM HỌC VIÊN / SINH VIÊN THỰC HIỆN:}\\
+        \vspace{0.2cm}
+        1. \underline{\hspace{4.2cm}} (MSHV: \underline{\hspace{1.5cm}})\\
+        2. \underline{\hspace{4.2cm}} (MSHV: \underline{\hspace{1.5cm}})\\
+        3. \underline{\hspace{4.2cm}} (MSHV: \underline{\hspace{1.5cm}})\\
+        4. \underline{\hspace{4.2cm}} (MSHV: \underline{\hspace{1.5cm}})\\
+        5. \underline{\hspace{4.2cm}} (MSHV: \underline{\hspace{1.5cm}})
+    \end{minipage}
+    
+    \vfill
+    {\large \textbf{TP. HỒ CHÍ MINH, NĂM 2026}\par}
+\end{center}
+\end{titlepage}
+
+\newpage
+\pagenumbering{roman}
+
+% =========================================================================
+% LỜI CAM ĐOAN
+% =========================================================================
+\section*{LỜI CAM ĐOAN}
+\addcontentsline{toc}{section}{LỜI CAM ĐOAN}
+
+Chúng tôi xin cam đoan rằng công trình nghiên cứu khoa học và khóa luận tốt nghiệp với đề tài \textbf{``Nghiên cứu, cải tiến và xây dựng hệ thống phát hiện bất thường chuỗi thời gian không giám sát dựa trên tự mã hóa tích chập và phân loại hình thái bất thường giả lập đa lớp (RedLamp)''} là kết quả nghiên cứu độc lập, nghiêm túc và trung thực của tập thể nhóm nghiên cứu dưới sự định hướng và hướng dẫn khoa học trực tiếp của Giảng viên hướng dẫn.
+
+Mọi số liệu thực nghiệm, kết quả mô phỏng, đồ thị huấn luyện, bảng tham số phần cứng và mã nguồn hệ thống được trình bày trong báo cáo này đều được thu thập và thực thi trực tiếp từ các môi trường thí nghiệm thực tế (bao gồm cụm máy chủ đám mây Kaggle GPU Nvidia Tesla P100-PCIE-16GB và máy trạm kiểm thử cục bộ tại đơn vị). Tất cả các tài liệu tham khảo, kết quả nghiên cứu kế thừa từ các công trình khoa học quốc tế uy tín (KDD, VLDB, ICLR, NeurIPS, IEEE TKDE)~\cite{paparrizos2022tsb,su2019robust,xu2022anomaly,tatbul2018precision}~\cite{paparrizos2022tsb,su2019robust,xu2022anomaly,tatbul2018precision} đều được trích dẫn nguồn gốc một cách rõ ràng, minh bạch và chính xác theo đúng quy chuẩn học thuật của Trường Đại học Công nghệ Thông tin - Đại học Quốc gia TP.HCM.
+
+Nhóm tác giả xin hoàn toàn chịu trách nhiệm trước Hội đồng Khoa học và Nhà trường về tính trung thực và tính nguyên bản của công trình nghiên cứu này.
+
+\vspace{1.5cm}
+\begin{flushright}
+    \textit{Tp. Hồ Chí Minh, ngày 13 tháng 11 năm 2026}\\
+    \textbf{Đại diện nhóm nghiên cứu}\\
+    \vspace{1.0cm}
+    \underline{\hspace{6.0cm}}
+\end{flushright}
+
+\newpage
+
+% =========================================================================
+% LỜI CẢM ƠN
+% =========================================================================
+\section*{LỜI CẢM ƠN}
+\addcontentsline{toc}{section}{LỜI CẢM ƠN}
+
+Để hoàn thành công trình nghiên cứu và bản báo cáo đề tài tốt nghiệp này, nhóm nghiên cứu đã nhận được sự quan tâm, động viên và hỗ trợ vô cùng to lớn từ các quý Thầy Cô, gia đình, bạn bè và các đồng nghiệp.
+
+Trước hết, nhóm nghiên cứu xin bày tỏ lòng biết ơn sâu sắc và chân thành nhất đến Quý Thầy/Cô Giảng viên hướng dẫn khoa học của đề tài. Thầy/Cô đã dành nhiều thời gian quý báu để định hướng đề tài, truyền đạt phương pháp tư duy nghiên cứu khoa học chuẩn mực, tận tình chỉ dẫn và phản biện sâu sắc từng giải thuật, mô hình thí nghiệm và quy trình đánh giá khắt khe trong suốt quá trình nhóm triển khai nghiên cứu. Những nhận xét thấu đáo và sự khích lệ của Thầy/Cô là động lực to lớn giúp nhóm vượt qua các thách thức kỹ thuật phức tạp trong xử lý chuỗi thời gian đa chiều.
+
+Nhóm xin chân thành cảm ơn Ban Giám hiệu Trường Đại học Công nghệ Thông tin, Ban Chủ nhiệm Khoa Khoa học Máy tính cùng toàn thể quý Thầy Cô giáo đã tận tâm giảng dạy, trang bị cho chúng tôi nền tảng tri thức học thuật vững chắc, tư duy hệ thống và kỹ năng thực nghiệm hiện đại trong suốt những năm học tập và nghiên cứu dưới mái trường Đại học Quốc gia TP.HCM.
+
+Cuối cùng, chúng tôi xin gửi lời tri ân sâu sắc đến gia đình, người thân và các bạn đồng môn đã luôn là chỗ dựa tinh thần vững chắc, luôn sẻ chia, động viên và tạo mọi điều kiện thuận lợi nhất để nhóm nghiên cứu có thể hoàn thành tốt công trình này.
+
+\newpage
+
+% =========================================================================
+% TÓM TẮT ĐỀ TÀI (TIẾNG VIỆT)
+% =========================================================================
+\section*{TÓM TẮT ĐỀ TÀI}
+\addcontentsline{toc}{section}{TÓM TẮT ĐỀ TÀI}
+
+Phát hiện bất thường trong dữ liệu chuỗi thời gian (\textit{Time-Series Anomaly Detection} -- TSAD) là bài toán cốt lõi trong giám sát hạ tầng công nghệ thông tin (AIOps), mạng lưới cảm biến công nghiệp (IIoT), thiết bị viễn thông không gian (\textit{Aerospace Telemetry}) và hệ thống tài chính. Thách thức lớn nhất trong môi trường thực tế bắt nguồn từ sự khan hiếm nghiêm trọng của nhãn dữ liệu chuẩn (\textit{ground-truth labels}) và hiện tượng mất cân bằng cực đoan giữa các quan sát bình thường và bất thường. Các phương pháp học sâu không giám sát truyền thống chủ yếu dựa trên mạng tự mã hóa (\textit{Autoencoder} -- AE) hoặc mạng tự mã hóa biến phân (\textit{Variational Autoencoder} -- VAE) gặp phải một nghịch lý cơ bản: hiện tượng ``tổng quát hóa thái quá'' (\textit{Over-generalization}), khi mô hình vô tình tái tạo thành công cả các đoạn chuỗi bị lỗi với sai số nhỏ, dẫn đến suy giảm độ nhạy phát hiện.
+
+Đề tài này tập trung nghiên cứu, tối ưu hóa và hiện thực hóa giải pháp \textbf{RedLamp} (\textit{Robust and Explainable Detector of Time Series Anomaly via Augmenting Multiclass Pseudo-Anomalies}) -- một khung học tự giám sát (\textit{Self-Supervised Learning}) đột phá kết hợp giữa cơ chế tái tạo có mặt nạ (\textit{Masked Autoencoding}) và phân loại hình thái bất thường giả lập đa lớp (\textit{Morphological Pseudo-Anomaly Classification}). Mạng nơ-ron cốt lõi \textbf{ConvAEC} được xây dựng hoàn toàn dựa trên các khối tích chập 1 chiều (1D-CNN) đa tầng song song, loại bỏ hoàn toàn các nút thắt cổ chai tính toán tuần tự của RNN/LSTM. Bằng cách thiết lập bộ sinh 11 hình thái biến dạng bất thường giả lập phong phú (\textit{Spike, Flip, Speedup, Noise, Cutoff, Average, Scale, Wander, Contextual, UpsideDown, Mixture}) cùng với trạng thái bình thường (\textit{Normal}), mô hình được rèn luyện để đồng thời vừa học cách khôi phục lại dữ liệu nguyên bản chưa bị biến dạng thông qua mặt nạ nhị phân, vừa phân biệt chính xác bản chất hình thái hình học của từng loại bất thường thông qua kỹ thuật làm mượt nhãn bất đối xứng (\textit{Asymmetric Label Smoothing with Normal Prior}).
+
+Trong quá trình suy luận, hệ thống áp dụng cơ chế tính điểm hai giai đoạn (\textit{Two-Stage Composite Anomaly Scoring}), kết hợp giữa sai số tái tạo cục bộ ($\text{Score}_{\text{MSE}}$) và điểm xác suất phân loại hình thái ($\text{Score}_{\text{CE}}$) được lọc nhiễu qua bộ loại trừ tần suất nền ngẫu nhiên. Thực nghiệm diện rộng trên 6 bộ dữ liệu tiêu chuẩn quốc tế quy mô lớn gồm Server Machine Dataset (SMD -- 28 máy chủ, 38 chiều), AIOps/IOPS (29 KPI dịch vụ), NASA SMAP (55 kênh, 25 chiều), NASA MSL (27 kênh, 55 chiều), Stock TSB-AD-U~\cite{paparrizos2022tsb} (20 chuỗi tài chính) và UCR Anomaly Archive~\cite{dau2019ucr} (250 chuỗi đa miền) theo giao thức đánh giá chuẩn VUS-ROC, VUS-PR và Range-F1 đã chứng minh tính ưu việt vượt trội của RedLamp so với các phương pháp cơ sở (Isolation Forest, XGBoost, LSTM-VAE) và tương đương hoặc vượt các mô hình SOTA (OmniAnomaly~\cite{su2019robust}, Anomaly Transformer~\cite{xu2022anomaly}~\cite{xu2022anomaly}). Đặc biệt, đề tài đã phát triển hoàn chỉnh ứng dụng Web Demo tương tác (Python FastAPI + HTML5 Canvas offline) hỗ trợ khám phá toàn diện 159 thực thể, cho phép kiểm thử thời gian thực và trực quan hóa giải thích được (\textit{Explainable AI}) cơ chế kích hoạt tầng nơ-ron bên trong của mô hình.
+
+\vspace{0.5cm}
+\noindent\textbf{Từ khóa:} Phát hiện bất thường chuỗi thời gian; Tự mã hóa tích chập; Tăng cường hình thái bất thường giả lập; Tự giám sát; Khả năng giải thích AI (XAI); ConvAEC; VUS-ROC; VUS-PR; Range-F1.
+
+\newpage
+
+% =========================================================================
+% ABSTRACT (ENGLISH)
+% =========================================================================
+\selectlanguage{english}
+\section*{ABSTRACT}
+\addcontentsline{toc}{section}{ABSTRACT}
+
+Time-series anomaly detection (TSAD) is a pivotal task in modern intelligent monitoring, spanning IT infrastructure operations (AIOps), Industrial Internet of Things (IIoT), aerospace telemetry, and quantitative finance. In practical deployment, the scarcity of verified ground-truth labels and severe class imbalance pose formidable challenges. Traditional unsupervised deep learning architectures based purely on reconstruction objectives (such as Autoencoders and Variational Autoencoders) frequently suffer from the ``over-generalization'' paradox: the model inadvertently reconstructs abnormal temporal patterns with minimal residual error, degrading detection precision and recall.
+
+This thesis presents a comprehensive study, optimization, and practical deployment of \textbf{RedLamp} (\textit{Robust and Explainable Detector of Time Series Anomaly via Augmenting Multiclass Pseudo-Anomalies}) -- an innovative self-supervised framework fusing masked autoencoding with multiclass morphological pseudo-anomaly classification. The backbone architecture, \textbf{ConvAEC}, is engineered strictly using hierarchical 1D convolutional residual blocks, entirely eliminating recurrent bottlenecks (LSTM/GRU) and enabling highly parallelized computation. By designing an augmentation engine that injects 11 distinct artificial anomaly morphologies (\textit{Spike, Flip, Speedup, Noise, Cutoff, Average, Scale, Wander, Contextual, UpsideDown, Mixture}) alongside pristine normal sequences, the model is jointly optimized to reconstruct clean context via binary masking and discriminate anomaly geometries through asymmetric label smoothing with a structural normal prior.
+
+At inference time, RedLamp executes a two-stage composite anomaly scoring protocol, harmonizing local reconstruction residual errors ($\text{Score}_{\text{MSE}}$) with classifier confidence scores ($\text{Score}_{\text{CE}}$) filtered dynamically against background false positives. Extensive empirical evaluations across six benchmark suites -- Server Machine Dataset (SMD: 28 entities, 38 dimensions), AIOps/IOPS (29 KPI streams), NASA SMAP (55 channels, 25 dimensions), NASA MSL (27 channels, 55 dimensions), Stock TSB-AD-U (20 financial series), and UCR Anomaly Archive (250 multi-domain series) -- under rigorous range-aware metrics (VUS-ROC, VUS-PR, and Range-F1) substantiate the superior robustness and sensitivity of RedLamp over classical and deep learning baselines (Isolation Forest, XGBoost, LSTM-VAE) and competitive parity with state-of-the-art transformers. Furthermore, a standalone, offline-ready interactive Web Demo system (Python FastAPI backend and lightweight HTML5 Canvas frontend) has been engineered, supporting 159 benchmark entities with real-time inference and Explainable AI (XAI) feature activation visualization.
+
+\vspace{0.5cm}
+\noindent\textbf{Keywords:} Time-Series Anomaly Detection; Convolutional Autoencoder; Pseudo-Anomaly Augmentation; Self-Supervised Learning; Explainable AI; ConvAEC; VUS-ROC; VUS-PR; Range-F1.
+
+\selectlanguage{vietnamese}
+\newpage
+
+% =========================================================================
+% DANH MỤC THUẬT NGỮ VÀ KÝ HIỆU
+% =========================================================================
+\section*{DANH MỤC TỪ VIẾT TẮT VÀ THUẬT NGỮ}
+\addcontentsline{toc}{section}{DANH MỤC TỪ VIẾT TẮT VÀ THUẬT NGỮ}
+
+\begin{table}[htbp]
+\centering
+\caption{Danh mục các từ viết tắt được sử dụng trong báo cáo}
+\label{tab:abbreviations}
+\begin{tabular}{llp{7.5cm}}
+\toprule
+\textbf{Từ viết tắt} & \textbf{Thuật ngữ tiếng Anh đầy đủ} & \textbf{Ý nghĩa / Diễn giải tiếng Việt} \\
+\midrule
+TSAD & Time-Series Anomaly Detection & Phát hiện bất thường trong chuỗi thời gian \\
+RedLamp & Robust and Explainable Detector... & Hệ thống phát hiện bất thường bền bỉ và giải thích được qua tăng cường giả lập đa lớp \\
+ConvAEC & Convolutional Autoencoder with Classifier & Bộ tự mã hóa tích chập tích hợp nhánh phân loại \\
+1D-CNN & 1-Dimensional Convolutional Neural Network & Mạng nơ-ron tích chập một chiều \\
+RNN & Recurrent Neural Network & Mạng nơ-ron hồi quy tuần tự \\
+LSTM & Long Short-Term Memory & Mạng bộ nhớ ngắn-dài hạn \\
+VAE & Variational Autoencoder & Bộ tự mã hóa biến phân \\
+MLP & Multi-Layer Perceptron & Mạng truyền thẳng đa tầng \\
+MSE & Mean Squared Error & Sai số bình phương trung bình \\
+CE & Cross-Entropy & Độ mất mát entropy chéo \\
+VUS-ROC & Volume Under the Surface of ROC & Thể tích dưới mặt cong ROC tích phân theo vùng đệm trễ \\
+VUS-PR & Volume Under the Surface of PR & Thể tích dưới mặt cong Precision-Recall \\
+RF / Range-F1 & Range-based F1 Score & Điểm F1 đánh giá theo đoạn thời gian \\
+SMD & Server Machine Dataset & Bộ dữ liệu giám sát cụm máy chủ (28 máy, 38 chiều) \\
+IOPS & AIOps KPI Challenge Dataset & Bộ dữ liệu chỉ số hiệu năng dịch vụ mạng Internet \\
+SMAP & Soil Moisture Active Passive & Dữ liệu viễn thám độ ẩm đất vệ tinh NASA \\
+MSL & Mars Science Laboratory & Dữ liệu kỹ thuật xe tự hành Curiosity thám hiểm Sao Hỏa \\
+UCR & University of California Riverside & Bộ lưu trữ dữ liệu kiểm chuẩn chuỗi thời gian UCR \\
+AMP & Automatic Mixed Precision & Kỹ thuật huấn luyện độ chính xác hỗn hợp tự động \\
+XAI & Explainable Artificial Intelligence & Trí tuệ nhân tạo có thể giải thích được \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.8cm}
+
+\begin{table}[htbp]
+\centering
+\caption{Danh mục ký hiệu toán học quy chuẩn trong báo cáo}
+\label{tab:notations}
+\begin{tabular}{cp{12.0cm}}
+\toprule
+\textbf{Ký hiệu} & \textbf{Ý nghĩa toán học} \\
+\midrule
+$X \in \mathbb{R}^{T \times D}$ & Ma trận chuỗi thời gian quan sát gồm $T$ bước thời gian và $D$ kênh thuộc tính / cảm biến. \\
+$W$ & Độ dài cửa sổ trượt thời gian (mặc định $W = 100$). \\
+$s$ & Bước trượt giữa các cửa sổ kế tiếp ($s=1$ trên Stock/UCR, $s=10$ trên SMD/IOPS/SMAP/MSL). \\
+$B$ & Kích thước batch huấn luyện (mặc định $B = 128$ mẫu cửa sổ trượt). \\
+$M \in \{0, 1\}^{W \times D}$ & Mặt nạ nhị phân tái tạo ($M=0$ tại các điểm bị biến dạng giả lập, $M=1$ tại các điểm sạch). \\
+$C$ & Số lượng lớp phân loại hình thái bất thường ($C = 12$, gồm 1 lớp Normal và 11 lớp giả lập). \\
+$z \in \mathbb{R}^{B \times 128}$ & Vector đặc trưng tiềm ẩn nén tại cổ chai mạng ConvAEC. \\
+$\lambda$ & Hệ số cân bằng giữa hàm mất mát tái tạo và phân loại (mặc định $\lambda = 0.1$). \\
+$\alpha, \beta$ & Tham số làm mượt nhãn bất đối xứng ($\alpha = 0.1$ cho Normal, $\beta = 0.01$ cho các lớp còn lại). \\
+$\theta_{\text{bg}}$ & Ngưỡng lọc tần suất lớp nền ngẫu nhiên toàn chuỗi (mặc định $\theta_{\text{bg}} = 0.05$). \\
+$\text{Score}(t)$ & Điểm bất thường tổng hợp cuối cùng tại bước thời gian $t \in [0, 1]$. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\newpage
+\tableofcontents
+\newpage
+\listoftables
+\newpage
+\listoffigures
+\newpage
+
+\pagenumbering{arabic}
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 1: TỔNG QUAN ĐỀ TÀI VÀ TÍNH CẤP THIẾT
+% =========================================================================
+\section{TỔNG QUAN ĐỀ TÀI VÀ TÍNH CẤP THIẾT}
+\label{sec:chapter1}
+
+\subsection{Bối cảnh phát hiện bất thường trong dữ liệu chuỗi thời gian}
+Trong kỷ nguyên Chuyển đổi số và Công nghiệp 4.0, sự bùng nổ của hạ tầng điện toán đám mây quy mô siêu lớn (\textit{Hyperscale Cloud}), mạng lưới thiết bị Internet vạn vật công nghiệp (\textit{Industrial IoT} -- IIoT), các hệ thống giám sát vệ tinh không gian (\textit{Spacecraft Telemetry}) và các nền tảng giao dịch tài chính tần suất cao (\textit{High-Frequency Trading}) đã sản sinh ra một khối lượng khổng lồ dữ liệu chuỗi thời gian (\textit{Time-Series Data}). Chuỗi thời gian là tập hợp các quan sát số học được ghi nhận liên tục theo trình tự thời gian, phản ánh trạng thái động lực học, hành vi hoạt động và sức khỏe vật lý của các thực thể phần cứng lẫn phần mềm. Trong các môi trường vận hành khắt khe này, một sự cố gián đoạn dịch vụ, một lỗi quá tải phần cứng máy chủ, hay một hư hỏng cảm biến cơ khí nhỏ nếu không được nhận diện kịp thời đều có thể dẫn đến thiệt hại hàng triệu đô la, thậm chí đe dọa nghiêm trọng đến an toàn tính mạng con người và an ninh quốc gia.
+
+Do đó, bài toán Phát hiện bất thường trong chuỗi thời gian (\textit{Time-Series Anomaly Detection} -- TSAD) trở thành một trong những lĩnh vực nghiên cứu nền tảng và có giá trị ứng dụng thực tiễn cao nhất của Trí tuệ Nhân tạo và Khoa học Dữ liệu hiện đại. Mục tiêu tối thượng của TSAD là tự động phân tích dòng dữ liệu liên tục để chỉ ra chính xác thời điểm, khoảng thời gian và mức độ nghiêm trọng của các hành vi dị biệt (\textit{anomalies / outliers}) khác biệt rõ rệt so với quy luật vận hành danh định (\textit{nominal behavior}).
+
+\subsection{Những thách thức cốt lõi trong thực tế}
+Mặc dù đã trải qua hàng thập kỷ phát triển từ các phương pháp thống kê cổ điển đến các mạng nơ-ron học sâu phức tạp, bài toán TSAD trong thực tiễn vẫn phải đối mặt với ba rào cản kỹ thuật đặc biệt nan giải:
+
+\begin{enumerate}
+    \item \textbf{Sự khan hiếm nghiêm trọng của nhãn dữ liệu chuẩn (\textit{Ground-Truth Labels}):} 
+    Trong hầu hết các hệ thống thực tế, các sự cố bất thường xảy ra với tần suất vô cùng thấp (thường chiếm dưới $1\%$ đến $5\%$ tổng thời lượng quan sát). Việc thu thập và gắn nhãn thủ công các sự cố này đòi hỏi chi phí khổng lồ, cần đến sự can thiệp của các chuyên gia miền chuyên sâu (\textit{Domain Experts}) và tiềm ẩn nguy cơ sai lệch chủ quan. Hơn thế nữa, các dạng lỗi mới phát sinh trong tương lai thường không hề xuất hiện trong lịch sử quá khứ. Vì vậy, các giải pháp học có giám sát truyền thống hoàn toàn bị tê liệt hoặc suy giảm độ chính xác nghiêm trọng khi đối mặt với dữ liệu thế giới thực không có nhãn.
+    
+    \item \textbf{Nghịch lý ``Tổng quát hóa thái quá'' (\textit{Over-Generalization}) của các mô hình học sâu tái tạo:} 
+    Để vượt qua bài toán thiếu nhãn, hướng tiếp cận không giám sát dựa trên mô hình tự mã hóa (\textit{Autoencoder} -- AE) hoặc tự mã hóa biến phân (\textit{VAE}) đã trở thành tiêu chuẩn chủ đạo. Cơ chế hoạt động của AE là học cách nén chuỗi thời gian đầu vào thành một vector tiềm ẩn (\textit{latent vector}) rồi tái tạo lại chính chuỗi đó, dựa trên giả định rằng mô hình chỉ được huấn luyện trên dữ liệu bình thường nên sẽ không thể tái tạo được các bất thường, từ đó sinh ra sai số tái tạo (\textit{Reconstruction Error}) cao tại các vị trí lỗi. Tuy nhiên, các nghiên cứu gần đây đã chỉ ra một hạn chế chí mạng: do khả năng xấp xỉ hàm phi tuyến mạnh mẽ của mạng nơ-ron sâu, các mô hình AE thông thường rất dễ rơi vào hiện tượng ``tổng quát hóa thái quá''. Khi gặp một đoạn bất thường có biên độ hoặc tần số lạ, bộ giải mã vẫn có thể vô tình tái tạo lại chính xác đoạn lỗi đó với sai số cực nhỏ. Hậu quả là mô hình bỏ sót các sự cố nguy hiểm (tăng tỉ lệ \textit{False Negatives}).
+    
+    \item \textbf{Tính phức tạp đa chiều và sự tương quan chéo giữa các cảm biến (\textit{Multivariate Inter-dependencies}):} 
+    Các hệ thống hiện đại như cụm máy chủ phân tán (SMD với 38 chỉ số đo lường) hay hệ thống tàu thăm dò không gian của NASA (MSL với 55 thuộc tính) có sự liên kết phi tuyến cực kỳ phức tạp giữa các kênh đo. Một sự cố có thể không biểu hiện rõ rệt ở từng kênh riêng lẻ (biên độ vẫn nằm trong ngưỡng an toàn) mà chỉ bộc lộ qua sự phá vỡ mối tương quan giữa các kênh đồng thời. Việc phát hiện các bất thường phụ thuộc ngữ cảnh (\textit{Contextual Anomalies}) đòi hỏi kiến trúc nơ-ron phải có khả năng đồng thời trích xuất đặc trưng thời gian (\textit{Temporal Dynamics}) và đặc trưng không gian đa kênh (\textit{Spatial Correlations}) một cách hiệu quả mà không làm bùng nổ chi phí tính toán.
+\end{enumerate}
+
+\subsection{Mục tiêu nghiên cứu và Phạm vi đề tài}
+Xuất phát từ các thách thức thực tiễn nêu trên, đề tài tập trung nghiên cứu, cải tiến và xây dựng hoàn chỉnh hệ thống phát hiện bất thường chuỗi thời gian không giám sát \textbf{RedLamp} (\textit{Robust and Explainable Detector of Time Series Anomaly via Augmenting Multiclass Pseudo-Anomalies}).
+
+Mục tiêu cụ thể của đề tài bao gồm:
+\begin{enumerate}
+    \item Nghiên cứu sâu sắc cơ chế học tự giám sát (\textit{Self-Supervised Learning}) kết hợp giữa mô hình tái tạo có mặt nạ (\textit{Masked Reconstruction}) và phân loại hình thái bất thường nhân tạo đa lớp (\textit{Multi-class Pseudo-Anomaly Classification}).
+    \item Tối ưu hóa kiến trúc mạng nơ-ron tích chập 1 chiều \textbf{ConvAEC} (\textit{Convolutional Autoencoder with Classifier}), loại bỏ hoàn toàn các lớp hồi quy tuần tự (RNN/LSTM) để đạt tốc độ xử lý song song vượt trội trên GPU/CPU, đồng thời duy trì độ chính xác cao trên các chuỗi thời gian đa chiều.
+    \item Xây dựng bộ sinh 12 hình thái biến dạng bất thường giả lập phong phú, kết hợp kỹ thuật làm mượt nhãn bất đối xứng (\textit{Asymmetric Label Smoothing with Normal Prior}) và cơ chế tính điểm hai giai đoạn (\textit{Two-Stage Composite Anomaly Scoring}) để triệt tiêu hiện tượng báo động giả và khắc phục triệt để hiện tượng over-generalization.
+    \item Triển khai thực nghiệm nghiêm ngặt, đối sánh toàn diện RedLamp với các mô hình cơ sở (\textit{Isolation Forest, XGBoost, LSTM-VAE}) và các mô hình SOTA quốc tế trên 6 bộ benchmark tiêu chuẩn (SMD, IOPS, SMAP, MSL, Stock, UCR Anomaly Archive) theo các thang đo phạm vi hiện đại (VUS-ROC, VUS-PR, Range-F1).
+    \item Thiết kế và phát triển hoàn chỉnh ứng dụng Web Demo tương tác (Python FastAPI backend + HTML5 Canvas offline frontend), cho phép người dùng kiểm thử trực tiếp trên 159 thực thể benchmark, đồng thời cung cấp khả năng giải thích trực quan (\textit{Explainable AI}) từng tầng nơ-ron của mô hình thông qua cơ chế PyTorch forward hooks.
+\end{enumerate}
+
+\subsection{Các đóng góp khoa học và thực tiễn nổi bật của đề tài}
+\label{subsec:contributions}
+Công trình nghiên cứu mang lại 5 đóng góp học thuật và kỹ thuật nổi bật sau:
+
+\begin{itemize}
+    \item \textbf{Đóng góp 1 (Khung tự giám sát không giám sát đột phá):} Đề tài loại bỏ hoàn toàn sự lệ thuộc vào nhãn sự cố của con người, đề xuất cơ chế tự giám sát dựa trên việc tiêm các hình thái dị biệt giả lập vào chuỗi sạch, biến bài toán không giám sát truyền thống thành bài toán tối ưu hóa đa nhiệm (\textit{Multi-task Learning}) có định hướng rõ ràng.
+    
+    \item \textbf{Đóng góp 2 (Hệ thống phân loại 12 hình thái biến dạng tín hiệu):} Xây dựng bộ phân loại bao quát 11 hình thái bất thường nhân tạo đặc trưng (chia thành hai nhóm: bất thường điểm biến dị cục bộ như Spike, Noise, Cutoff; và bất thường cấu trúc biến dạng hình thái như Flip, Speedup, Average, Scale, Wander, Contextual, UpsideDown, Mixture) cùng với trạng thái Normal danh định.
+    
+    \item \textbf{Đóng góp 3 (Cơ chế làm mượt nhãn bất đối xứng với tiên nghiệm Normal):} Đề xuất công thức làm mượt nhãn mềm chuyên biệt gán trọng số ưu tiên $\alpha = 0.1$ cho lớp Normal và phân bổ đều $\beta = 0.01$ cho các lớp còn lại. Cơ chế này ngăn chặn mạng nơ-ron tự tin thái quá (\textit{over-confidence}) vào các tạo tác nhân tạo, tạo ra vùng đệm dung sai hoàn hảo khi tiếp xúc với các dị biệt thực tế ngoài tự nhiên.
+    
+    \item \textbf{Đóng góp 4 (Quy trình tính điểm kết hợp hai giai đoạn có lọc nền động):} Đề xuất công thức hợp nhất điểm số cuối cùng $\text{Score}(t) = 0.5 \cdot [\text{Score}_{\text{MSE}}(t) + \text{Score}_{\text{CE}}(t)]$, trong đó nhánh phân loại $\text{Score}_{\text{CE}}$ được trang bị cơ chế tự động loại bỏ các lớp nền có xác suất trung bình toàn chuỗi vượt ngưỡng $0.05$ ($\theta_{\text{bg}} = 0.05$), triệt tiêu các cảnh báo giả do biến động nhiễu môi trường.
+    
+    \item \textbf{Đóng góp 5 (Hệ thống Web Demo Explainable AI hoàn chỉnh chạy Offline):} Xây dựng thành công ứng dụng demo trực quan với kiến trúc phi phụ thuộc Internet ($100\%$ offline), tích hợp đầy đủ 159 thực thể của 5 bộ dữ liệu quốc tế, cho phép can thiệp tham số, tiêm điểm dữ liệu tùy biến và bóc tách trực quan từng lớp kích hoạt nơ-ron (\textit{Feature Heatmap, Latent Vector, Reconstructed Curves}).
+\end{itemize}
+
+\subsection{Bố cục của báo cáo}
+Báo cáo khóa luận được cấu trúc thành 7 chương chính như sau:
+\begin{itemize}
+    \item \textbf{Chương 1:} Tổng quan đề tài và Tính cấp thiết.
+    \item \textbf{Chương 2:} Cơ sở lý thuyết và Các công trình liên quan.
+    \item \textbf{Chương 3:} Kiến trúc mô hình RedLamp và Giải thuật cốt lõi.
+    \item \textbf{Chương 4:} Dữ liệu thực nghiệm, Môi trường phần cứng và Thiết lập huấn luyện.
+    \item \textbf{Chương 5:} Kết quả thực nghiệm và Phân tích đối sánh chuyên sâu.
+    \item \textbf{Chương 6:} Thiết kế và Hiện thực Hệ thống Web Demo Tương tác \& Khả năng Giải thích (Explainable AI).
+    \item \textbf{Chương 7:} Kết luận và Hướng phát triển tương lai.
+    \item \textbf{Tài liệu tham khảo \& Phụ lục kỹ thuật:} Liệt kê 20 tài liệu chuẩn quốc tế và các mã nguồn, bảng tra cứu chi tiết.
+\end{itemize}
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 2: CƠ SỞ LÝ THUYẾT VÀ CÁC CÔNG TRÌNH LIÊN QUAN
+% =========================================================================
+\section{CƠ SỞ LÝ THUYẾT VÀ CÁC CÔNG TRÌNH LIÊN QUAN}
+\label{sec:chapter2}
+
+\subsection{Định nghĩa toán học bài toán phát hiện bất thường chuỗi thời gian}
+Chuỗi thời gian đa chiều (\textit{Multivariate Time Series}) được định nghĩa hình thức dưới dạng một ma trận chuỗi:
+\begin{equation}
+\label{eq:multivariate_ts}
+X = [x_1, x_2, \dots, x_T]^T \in \mathbb{R}^{T \times D}
+\end{equation}
+trong đó $T$ là tổng độ dài thời gian quan sát (số bước thời gian -- \textit{timestamps}) và $D$ là số chiều thuộc tính (số lượng biến số hoặc kênh cảm biến đồng thời, $D \ge 1$). Tại mỗi bước thời gian $t \in \{1, 2, \dots, T\}$, quan sát:
+\begin{equation}
+x_t = [x_{t,1}, x_{t,2}, \dots, x_{t,D}]^T \in \mathbb{R}^D
+\end{equation}
+biểu diễn trạng thái tức thời của hệ thống.
+
+Trong bài toán phát hiện bất thường không giám sát (\textit{Unsupervised TSAD}), tập dữ liệu huấn luyện $X_{\text{train}}$ được thu thập từ quá trình vận hành bình thường của hệ thống, nhưng có thể chứa một lượng nhỏ nhiễu ngẫu nhiên không được gắn nhãn. Tập dữ liệu kiểm thử $X_{\text{test}}$ đi kèm với một chuỗi nhãn nhị phân chuẩn $Y \in \{0, 1\}^T$, trong đó $Y_t = 0$ biểu thị trạng thái bình thường (\textit{Nominal}) và $Y_t = 1$ biểu thị trạng thái bất thường (\textit{Anomalous}). 
+
+Mục tiêu của thuật toán TSAD là học một hàm chấm điểm phi tuyến:
+\begin{equation}
+f: \mathbb{R}^{W \times D} \rightarrow \mathbb{R}^+
+\end{equation}
+sao cho với mỗi cửa sổ trượt tại thời điểm $t$, hàm $f$ gán một điểm số bất thường $\text{Score}(t) \in [0, 1]$. Một điểm dữ liệu được kết luận là bất thường nếu $\text{Score}(t)$ vượt qua một ngưỡng quyết định $\tau$ (\textit{Threshold}):
+\begin{equation}
+\hat{Y}_t = 
+\begin{cases}
+1, & \text{nếu } \text{Score}(t) \ge \tau \\
+0, & \text{ngược lại}
+\end{cases}
+\end{equation}
+
+\subsection{Phân loại hình thái bất thường trong chuỗi thời gian}
+Dựa trên đặc tính hình học và phạm vi lan truyền thời gian, các bất thường trong chuỗi thời gian được phân thành 3 nhóm cơ bản:
+
+\begin{enumerate}
+    \item \textbf{Bất thường điểm (\textit{Point Anomalies}):} 
+    Là các quan sát đơn lẻ có giá trị lệch đột ngột và cực đoan so với toàn bộ phần còn lại của dữ liệu (ví dụ: các xung nhọn tức thời -- \textit{Spikes} do nhiễu điện áp, hoặc sự sụt giảm tức thì về 0 do mất kết nối cảm biến). Điểm bất thường này dễ nhận diện nếu phân tích theo phân phối thống kê biên, nhưng lại dễ bị nhầm lẫn với nhiễu trắng nếu không xét ngữ cảnh lân cận.
+    
+    \item \textbf{Bất thường ngữ cảnh (\textit{Contextual Anomalies}):} 
+    Là các điểm dữ liệu có giá trị biên độ hoàn toàn nằm trong dải hoạt động danh định của hệ thống, nhưng lại trở nên bất thường khi đặt trong bối cảnh thời gian hoặc tương quan giữa các kênh. Ví dụ: nhiệt độ CPU máy chủ đạt $85^\circ\text{C}$ trong giờ cao điểm chạy tác vụ tính toán nặng là bình thường, nhưng nhiệt độ $85^\circ\text{C}$ vào lúc nửa đêm khi CPU chỉ tải $2\%$ là một bất thường ngữ cảnh nghiêm trọng.
+    
+    \item \textbf{Bất thường tập thể / Bất thường chuỗi (\textit{Collective / Pattern Anomalies}):} 
+    Là một chuỗi các điểm dữ liệu liên tiếp mà từng điểm riêng lẻ đều có vẻ bình thường, nhưng toàn bộ hình thái động lực học (\textit{Shapelet / Trajectory}) của đoạn chuỗi đó lại vi phạm chu kỳ hoặc quy luật vận hành của hệ thống (ví dụ: hiện tượng trôi dạt xu hướng -- \textit{Wander}, tín hiệu bị kẹp cứng một mức giá trị không đổi -- \textit{Flatline/Cutoff}, hoặc hiện tượng đảo ngược chu kỳ dao động -- \textit{UpsideDown}).
+\end{enumerate}
+
+\subsection{Tổng quan các phương pháp tiếp cận truyền thống}
+
+\subsubsection{Isolation Forest (Rừng cô lập -- iForest)}
+Isolation Forest (Liu et al.~\cite{liu2008isolation}) là một trong những giải thuật học máy phi tham số phổ biến nhất trong phát hiện dị biệt. Thuật toán hoạt động dựa trên nguyên lý: các điểm bất thường thường ``ít'' và ``khác biệt'', do đó chúng sẽ bị cô lập nhanh hơn các điểm bình thường trong cấu trúc cây nhị phân phân vùng ngẫu nhiên (\textit{iTree}).
+Độ sâu trung bình $h(x)$ của điểm $x$ trên một tập hợp gồm $n_{\text{tree}}$ cây cô lập được sử dụng để tính điểm số bất thường:
+\begin{equation}
+\label{eq:iforest_score}
+\text{Score}_{\text{iForest}}(x) = 2^{-\frac{\mathbb{E}(h(x))}{c(n)}}
+\end{equation}
+trong đó $c(n)$ là độ sâu trung bình của một cây tìm kiếm nhị phân thất bại xây dựng trên $n$ điểm:
+\begin{equation}
+c(n) = 2 \ln(n - 1) + 0.5772156649 \text{ (Euler's constant)} - \frac{2(n-1)}{n}
+\end{equation}
+\textbf{Ưu điểm:} Tốc độ tính toán nhanh, độ phức tạp tuyến tính $\mathcal{O}(n)$, không yêu cầu giả định phân phối chuẩn.
+\textbf{Nhược điểm:} iForest xử lý các điểm dữ liệu hoàn toàn độc lập, xem nhẹ mối liên kết thời gian (\textit{Temporal Ordering}). Khi áp dụng vào chuỗi thời gian, ta buộc phải dùng cửa sổ trượt phẳng hóa (\textit{flattened sliding window}), dẫn đến bùng nổ số chiều và mất mát cấu trúc chuỗi liên tục.
+
+\subsubsection{Mô hình dựa trên Gradient Boosting (XGBoost Anomaly Detector)}
+XGBoost (Chen \& Guestrin~\cite{chen2016xgboost}) là thuật toán tối ưu hóa cây quyết định tăng cường gradient vượt trội trong các bài toán bảng. Trong bài toán TSAD không giám sát, XGBoost thường được triển khai dưới dạng bộ dự báo tự hồi quy (\textit{Autoregressive Forecaster}): mô hình sử dụng $W-1$ bước thời gian quá khứ $[x_{t-W+1}, \dots, x_{t-1}]$ để dự báo bước thời gian tương lai $x_t$. Sai số tuyệt đối giữa giá trị thực tế và giá trị dự báo $|x_t - \hat{x}_t|$ được chuẩn hóa làm điểm số bất thường.
+\textbf{Ưu điểm:} Khả năng học các mối quan hệ phi tuyến phức tạp rất mạnh mẽ, xử lý tốt dữ liệu bảng nhiều thuộc tính.
+\textbf{Nhược điểm:} Việc dự báo từng bước thời gian rất nhạy cảm với hiện tượng tích lũy sai số (\textit{Error Accumulation}). Khi tín hiệu có tính ngẫu nhiên cao hoặc biến động phi tuần hoàn, XGBoost sinh ra nhiều cảnh báo giả do sai số dự báo tự nhiên tăng cao.
+
+\subsection{Tổng quan các phương pháp học sâu (Deep Learning Baselines)\nTheo các khảo sát tổng quan hệ thống và nghiên cứu đánh giá toàn diện của Blázquez-García et al.~\cite{blazquez2021review} cũng như Schmidl et al.~\cite{schmidl2022anomaly}, các phương pháp học sâu phát hiện bất thường chuỗi thời gian thường kết hợp mạng tự mã hóa với các mô hình xác suất tiềm ẩn (như DAGMM~\cite{zong2018deep}, USAD~\cite{audibert2020usad}, hay giải mã đa phân giải~\cite{shen2020timeseries}).}
+
+\subsubsection{Mô hình Tự mã hóa Tích chập thuần túy (Vanilla ConvAE)}
+Kiến trúc Autoencoder tích chập (ConvAE) nén chuỗi thời gian qua các tầng 1D-CNN thành vector tiềm ẩn và giải mã ngược lại.
+Hàm mất mát tối ưu hóa là sai số bình phương trung bình:
+\begin{equation}
+\mathcal{L}_{\text{AE}} = \frac{1}{W \times D} \sum_{t=1}^W \sum_{d=1}^D (x_{t,d} - \hat{x}_{t,d})^2
+\end{equation}
+Tuy nhiên, Vanilla ConvAE không có cơ chế ngăn chặn việc học tái tạo các mẫu lỗi, dẫn đến hiện tượng ``tổng quát hóa thái quá'' khi mạng tái tạo thành công cả các dị biệt.
+
+\subsubsection{Mạng Tự mã hóa Biến phân hồi quy (LSTM-VAE)}
+LSTM-VAE (Park et al.~\cite{park2018multimodal}) kết hợp khả năng mô hình hóa chuỗi tuần tự của LSTM với tính chất sinh xác suất của VAE. Mô hình ánh xạ chuỗi đầu vào thành các tham số của phân phối chuẩn nhiều chiều trong không gian tiềm ẩn: $\mu_z$ và $\sigma_z$, sau đó sử dụng kỹ thuật tái tham số hóa (\textit{Reparameterization Trick}):
+\begin{equation}
+z = \mu_z + \sigma_z \odot \epsilon, \quad \epsilon \sim \mathcal{N}(0, I)
+\end{equation}
+Hàm mục tiêu là cận dưới bằng chứng biến phân (\textit{Evidence Lower Bound} -- ELBO):
+\begin{equation}
+\mathcal{L}_{\text{ELBO}} = \mathbb{E}_{q(z|X)}[\log p(X|z)] - D_{\text{KL}}(q(z|X) \,\|\, p(z))
+\end{equation}
+Điểm số bất thường là xác suất tái tạo âm (\textit{Negative Reconstruction Probability}).
+\textbf{Hạn chế:} Tốc độ huấn luyện và suy luận của LSTM cực kỳ chậm do tính chất tính toán tuần tự không thể song song hóa triệt để trên GPU; đồng thời mô hình dễ bị suy giảm gradient trên chuỗi dài.
+
+\subsubsection{Các mô hình dựa trên Transformer (Anomaly Transformer~\cite{xu2022anomaly}~\cite{xu2022anomaly}, TranAD~\cite{tuli2022tranad}, DCdetector~\cite{yang2023dcdetector})}
+Trong những năm gần đây, các kiến trúc mô hình hóa chuỗi thời gian như Informer~\cite{zhou2021informer}, Autoformer~\cite{wu2021autoformer} đã mở đường cho các biến thể TSAD chuyên biệt. Tiêu biểu là \textit{Anomaly Transformer~\cite{xu2022anomaly}} (Xu et al.~\cite{xu2022anomaly}) đề xuất cơ chế \textit{Association Discrepancy} để so sánh giữa sự chú ý tiên nghiệm (\textit{Prior-Association}) và sự chú ý chuỗi (\textit{Series-Association}). Mô hình \textit{DCdetector} (Yang et al.~\cite{yang2023dcdetector}) sử dụng học tương phản đa tỉ lệ (\textit{Dual Attention Contrastive Learning}).
+Mặc dù đạt độ chính xác cao, các mô hình Transformer gặp phải rào cản tính toán: độ phức tạp bộ nhớ và thời gian bậc hai $\mathcal{O}(W^2)$, đòi hỏi hàng chục gigabyte VRAM và thời gian huấn luyện kéo dài gấp 10 lần so với mạng tích chập 1D thuần túy, gây khó khăn lớn khi triển khai trên các thiết bị giám sát thực địa.
+
+\subsection{Khoảng trống nghiên cứu và Sự cần thiết của RedLamp}
+Qua việc phân tích toàn diện các công trình nghiên cứu hiện hữu, ta nhận thấy một khoảng trống nghiên cứu rõ rệt:
+\begin{itemize}
+    \item Các phương pháp AE/VAE truyền thống bị tê liệt trước hiện tượng Over-generalization.
+    \item Các mô hình Transformer SOTA có chi phí tính toán quá cao và là ``hộp đen'' hoàn toàn, không cung cấp được lời giải thích trực quan về mặt hình thái học cho kỹ sư vận hành.
+\end{itemize}
+Do đó, sự ra đời của \textbf{RedLamp} với kiến trúc \textbf{ConvAEC} thuần tích chập, kết hợp tái tạo có mặt nạ và phân loại 12 hình thái bất thường giả lập tự giám sát, là bước đột phá giải quyết đồng thời cả ba tiêu chí: \textbf{Độ chính xác cao -- Tốc độ siêu tốc -- Khả năng giải thích sâu sắc (Explainable AI)}.
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 3: KIẾN TRÚC MÔ HÌNH REDLAMP VÀ GIẢI THUẬT CỐT LÕI
+% =========================================================================
+\section{KIẾN TRÚC MÔ HÌNH REDLAMP VÀ GIẢI THUẬT CỐT LÕI}
+\label{sec:chapter3}
+
+\subsection{Triết lý thiết kế tổng thể của RedLamp}
+RedLamp (\textit{Robust and Explainable Detector of Time Series Anomaly via Augmenting Multiclass Pseudo-Anomalies}) được xây dựng dựa trên một triết lý đột phá nhằm giải quyết tận gốc nghịch lý Over-generalization của các mô hình Autoencoder truyền thống: \textbf{Thay vì chỉ học tái tạo thụ động trên dữ liệu sạch, mô hình được chủ động ``thách thức'' bằng các biến dạng bất thường giả lập (\textit{Pseudo-Anomalies}) có cấu trúc phong phú}.
+
+Khung hoạt động của RedLamp được nâng đỡ bởi ba trụ cột kỹ thuật then chốt:
+\begin{enumerate}
+    \item \textbf{Cơ chế giám sát kép (\textit{Dual Supervision}):} Kết hợp mặt nạ tái tạo nhị phân (Binary Mask $M$) để buộc bộ giải mã chỉ được tái tạo các vùng tín hiệu nguyên bản (ngăn chặn triệt để việc học tái tạo lỗi), đồng thời kích hoạt một bộ phân loại phi tuyến đa lớp (\textit{Multiclass Classifier}) để nhận diện chính xác hình thái của biến dạng giả lập.
+    \item \textbf{Làm mượt nhãn bất đối xứng (\textit{Asymmetric Label Smoothing with Normal Prior}):} Áp dụng một tiên nghiệm an toàn thiên về trạng thái bình thường (Normal), ngăn ngừa bộ phân loại bị thiên lệch hoặc tự tin thái quá vào các tạo tác nhân tạo.
+    \item \textbf{Chấm điểm bất thường kết hợp hai giai đoạn (\textit{Two-Stage Composite Anomaly Scoring}):} Tích hợp đồng thời bằng chứng từ sai số tái tạo không gian (\textit{Reconstruction Residual}) và bằng chứng xác suất từ không gian ngữ nghĩa hình thái (\textit{Semantic Classification Confidence}) với cơ chế lọc nền động, tạo nên điểm số bất thường có độ bền bỉ và độ nhạy cực cao.
+\end{enumerate}
+
+\subsection{Bộ tăng cường 12 hình thái bất thường giả lập (12 Pseudo-Anomaly Morphologies)}
+\label{subsec:morphologies}
+Từ một cửa sổ chuỗi thời gian sạch ban đầu $X_{\text{normal}} \in \mathbb{R}^{W \times D}$ (với độ dài cửa sổ $W = 100$ bước thời gian trên $D$ kênh thuộc tính), RedLamp triển khai một động cơ tăng cường dữ liệu tự động tiêm ngẫu nhiên một trong 11 hình thái bất thường giả lập, kết hợp với chuỗi gốc để tạo thành không gian phân loại gồm $C = 12$ lớp (lớp 0 đến lớp 11).
+
+Các hình thái bất thường được phân chia thành hai nhóm hình học rõ rệt:
+
+\subsubsection{Nhóm 1: Bất thường điểm biến dị cục bộ (Local Point Perturbations)}
+\begin{itemize}
+    \item \textbf{Lớp 0 -- Normal (Bình thường):} Chuỗi thời gian sạch nguyên bản, không bị can thiệp biến dạng. Mặt nạ nhị phân tương ứng là ma trận đơn vị toàn một:
+    \begin{equation}
+    M = \mathbf{1} \in \{1\}^{W \times D}
+    \end{equation}
+    
+    \item \textbf{Lớp 1 -- Spike (Đỉnh xung nhọn):} Mô phỏng hiện tượng sốc điện áp hoặc xung đột tín hiệu tức thời. Động cơ chọn ngẫu nhiên các vị trí thời gian $t_{\text{spike}}$ và kênh $d_{\text{spike}}$, tiêm vào một giá trị xung có biên độ cực lớn:
+    \begin{equation}
+    X_{t_{\text{spike}}, d_{\text{spike}}} \leftarrow X_{t_{\text{spike}}, d_{\text{spike}}} + s_{\text{sign}} \cdot \gamma \cdot \sigma_d
+    \end{equation}
+    với $s_{\text{sign}} \in \{-1, 1\}$, $\gamma \in [3.0, 6.0]$ và $\sigma_d = \text{std}(X_d)$.
+    
+    \item \textbf{Lớp 4 -- Noise (Nhiễu Gauss cộng dồn):} Mô phỏng hiện tượng suy hao đường truyền hoặc nhiễu trắng cảm biến. Một đoạn chuỗi thời gian $[t_{\text{start}}, t_{\text{end}}]$ được cộng thêm nhiễu phân phối chuẩn không thiên lệch:
+    \begin{equation}
+    X_{t, d} \leftarrow X_{t, d} + \eta_t, \quad \eta_t \sim \mathcal{N}(0, \sigma_{\text{noise}}^2), \quad \sigma_{\text{noise}} = 0.3 \cdot \sigma_d
+    \end{equation}
+    
+    \item \textbf{Lớp 5 -- Cutoff (Kẹp ngưỡng / Treo cảm biến):} Mô phỏng sự cố cảm biến bị chạm trần đo đạc hoặc bão hòa vật lý. Tín hiệu trong đoạn $[t_{\text{start}}, t_{\text{end}}]$ bị kẹp bởi giá trị ngưỡng hằng số:
+    \begin{equation}
+    X_{t, d} \leftarrow \text{clamp}(X_{t, d}, \min(X_d), \mu_d)
+    \end{equation}
+\end{itemize}
+
+\subsubsection{Nhóm 2: Bất thường cấu trúc và biến dạng hình thái (Structural Morphological Perturbations)}
+\begin{itemize}
+    \item \textbf{Lớp 2 -- Flip (Đảo ngược thời gian):} Mô phỏng hiện tượng đảo chiều tiến trình vật lý. Đoạn chuỗi $[t_{\text{start}}, t_{\text{end}}]$ bị đảo ngược thứ tự trục thời gian:
+    \begin{equation}
+    X_{t, d} \leftarrow X_{t_{\text{end}} - (t - t_{\text{start}}), d}
+    \end{equation}
+    
+    \item \textbf{Lớp 3 -- Speedup (Tăng tốc tần số):} Mô phỏng hiện tượng dao động cơ học bị kích thích tăng tần số đột ngột. Đoạn tín hiệu được lấy mẫu lại (\textit{Resampling / Linear Interpolation}) với tốc độ gấp đôi, làm nén bước sóng chu kỳ dao động:
+    \begin{equation}
+    X_{t, d} \leftarrow \text{Interp}(X_{t_{\text{start}}:t_{\text{end}}, d}, \text{factor} = 2.0)
+    \end{equation}
+    
+    \item \textbf{Lớp 6 -- Average (Làm mịn trung bình trượt / Mất dao động):} Mô phỏng sự cố cảm biến bị trễ phản ứng hoặc mất tính năng động. Đoạn chuỗi được thay thế bằng giá trị trung bình trượt cục bộ, làm triệt tiêu hoàn toàn phương sai dao động tự nhiên:
+    \begin{equation}
+    X_{t, d} \leftarrow \frac{1}{|t_{\text{end}} - t_{\text{start}}|} \sum_{\tau = t_{\text{start}}}^{t_{\text{end}}} X_{\tau, d}
+    \end{equation}
+    
+    \item \textbf{Lớp 7 -- Scale (Khuếch đại / Suy giảm biên độ):} Mô phỏng sự thay đổi hệ số khuếch đại mạch đo. Đoạn chuỗi được nhân với một hệ số tỉ lệ $\alpha_{\text{scale}}$:
+    \begin{equation}
+    X_{t, d} \leftarrow X_{t, d} \cdot \alpha_{\text{scale}}, \quad \alpha_{\text{scale}} \in [0.2, 0.5] \cup [1.8, 3.0]
+    \end{equation}
+    
+    \item \textbf{Lớp 8 -- Wander (Trôi dạt xu hướng baseline):} Mô phỏng sự trôi dạt điểm không (\textit{Zero-drift}) do ảnh hưởng nhiệt độ môi trường. Một thành phần xu hướng bậc thấp tuyến tính được cộng dồn vào tín hiệu:
+    \begin{equation}
+    X_{t, d} \leftarrow X_{t, d} + \delta \cdot (t - t_{\text{start}}), \quad \delta = \frac{1.5 \cdot \sigma_d}{t_{\text{end}} - t_{\text{start}}}
+    \end{equation}
+    
+    \item \textbf{Lớp 9 -- Contextual (Lệch ngữ cảnh / Hoán đổi phân đoạn):} Một phân đoạn chuỗi từ vị trí thời gian xa xôi trong quá khứ được sao chép và ghép đè vào vị trí hiện tại $[t_{\text{start}}, t_{\text{end}}]$, tạo ra sự đứt gãy tương quan thời gian dù biên độ vẫn nằm trong dải bình thường.
+    
+    \item \textbf{Lớp 10 -- UpsideDown (Lật ngược cực tính biên độ):} Mô phỏng hiện tượng đảo cực tính cảm biến. Tín hiệu bị lật ngược quanh đường trục trung vị cục bộ $\mu_d$:
+    \begin{equation}
+    X_{t, d} \leftarrow \mu_d - (X_{t, d} - \mu_d) = 2\mu_d - X_{t, d}
+    \end{equation}
+    
+    \item \textbf{Lớp 11 -- Mixture (Tổ hợp đa biến dạng):} Sự kết hợp ngẫu nhiên của hai hoặc nhiều hình thái biến dạng nêu trên (ví dụ: vừa bị Wander vừa bị Noise), mô phỏng các sự cố thảm họa phức tạp trong thực tế.
+\end{itemize}
+
+Mặt nạ nhị phân tái tạo $M \in \{0, 1\}^{W \times D}$ được sinh đồng bộ:
+\begin{equation}
+\label{eq:binary_mask}
+M_{t, d} = 
+\begin{cases}
+0, & \text{nếu điểm } (t, d) \text{ bị biến đổi bởi bất thường giả lập} \\
+1, & \text{nếu là điểm sạch nguyên bản}
+\end{cases}
+\end{equation}
+
+\subsection{Kỹ thuật Làm mượt nhãn bất đối xứng (Asymmetric Label Smoothing with Normal Prior)}
+\label{subsec:label_smoothing}
+Trong học sâu có giám sát thông thường, nhãn mục tiêu là vector one-hot cứng $y \in \{0, 1\}^C$. Tuy nhiên, việc ép mô hình phân loại phải tuyệt đối tin tưởng vào các hình thái giả lập nhân tạo sẽ dẫn đến hai hệ lụy tiêu cực:
+\begin{itemize}
+    \item Mô hình quá tự tin (\textit{Over-confident}) vào các đặc trưng nhân tạo cụ thể, dẫn đến mất khả năng nhận diện các bất thường thực tế vốn có hình dạng biến hóa linh hoạt hơn.
+    \item Trong tập huấn luyện bình thường, một số chuỗi có thể chứa các dao động tự nhiên hơi giống với một dạng biến dạng nhẹ nào đó (ví dụ dao động tần số hơi cao giống Speedup nhẹ). Nếu phạt nặng mô hình khi nó phân vân, quá trình học sẽ trở nên bất ổn định.
+\end{itemize}
+
+Để khắc phục hiện tượng này, RedLamp đề xuất kỹ thuật \textbf{Làm mượt nhãn bất đối xứng} độc đáo với tiên nghiệm dành riêng cho lớp Normal (lớp 0).
+Cho vector nhãn one-hot chuẩn $y \in \{0, 1\}^C$ (với $C = 12$), vector nhãn mềm $\tilde{y}$ được tính toán theo quy tắc:
+\begin{equation}
+\label{eq:label_smoothing}
+\tilde{y}_c = y_c \cdot (1 - \alpha - \beta \cdot C + \beta) + (1 - y_c) \cdot \beta, \quad \forall c \in \{0, 1, \dots, C-1\}
+\end{equation}
+Sau đó, riêng vị trí lớp Normal ($\text{normal\_loc} = 0$) được cộng thêm một lượng tiên nghiệm an toàn $\alpha$:
+\begin{equation}
+\tilde{y}_0 \leftarrow \tilde{y}_0 + \alpha
+\end{equation}
+Trong triển khai chuẩn của RedLamp:
+\begin{itemize}
+    \item Siêu tham số $\alpha = 0.1$ đóng vai trò là ``lực kéo an toàn'', củng cố niềm tin cơ bản rằng hệ thống trong phần lớn thời gian luôn có xu hướng trở về trạng thái bình thường danh định.
+    \item Siêu tham số $\beta = 0.01$ phân bổ đều một lượng entropy nền nhỏ trên toàn bộ 12 lớp, giúp gradient của hàm mất mát Cross-Entropy không bao giờ bị bão hòa hay phát nổ.
+\end{itemize}
+
+\subsection{Chi tiết kiến trúc mạng nơ-ron ConvAEC}
+\label{subsec:convaec_details}
+Mạng nơ-ron cốt lõi của RedLamp, mang tên \textbf{ConvAEC} (\textit{Convolutional Autoencoder with Classifier}), là sự tích hợp chặt chẽ giữa một bộ tự mã hóa tích chập 1 chiều (1D-CNN) và một đầu phân loại phi tuyến đa lớp (Non-linear MLP Head). Điểm đặc biệt của ConvAEC là loại bỏ hoàn toàn các lớp mạng hồi quy tuần tự (RNN, LSTM, GRU) hay cơ chế tự chú ý bậc hai (Self-Attention $\mathcal{O}(W^2)$), từ đó đạt tốc độ tính toán song song cực đại và tối ưu hóa bộ nhớ đệm trên phần cứng hiện đại.
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng đặc tả chi tiết cấu hình từng tầng trong kiến trúc ConvAEC ($W=100$, Batch $B=128$)}
+\label{tab:convaec_layers}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Phân hệ} & \textbf{Tên tầng (Layer)} & \textbf{Kích thước vào} & \textbf{Cấu hình Kernel / Stride / Pad} & \textbf{Kích thước ra} & \textbf{Hàm kích hoạt} \\
+\midrule
+Input & Window Slicer & $(B, W, D)$ & Chuyển vị thành $(B, D, W)$ & $(B, D, 100)$ & None \\
+\midrule
+\multirow{4}{*}{ConvEncoder} 
+& ConvBlock 1 & $(B, D, 100)$ & Conv1d($D \rightarrow 128, k=4, s=2, p=2$) & $(B, 128, 51)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& ConvBlock 2 & $(B, 128, 51)$ & Conv1d($128 \rightarrow 128, k=4, s=2, p=2$) & $(B, 128, 26)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& ConvBlock 3 & $(B, 128, 26)$ & Conv1d($128 \rightarrow 256, k=4, s=2, p=2$) & $(B, 256, 14)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& ConvBlock 4 & $(B, 256, 14)$ & Conv1d($256 \rightarrow 256, k=4, s=2, p=2$) & $(B, 256, 8)$ & BatchNorm + ReLU + Dropout(0.2) \\
+\midrule
+\multirow{2}{*}{Bottleneck}
+& Global MaxPool & $(B, 256, 8)$ & MaxPool1d($k=8$, stride=1) & $(B, 256, 1)$ & None \\
+& Pointwise Conv & $(B, 256, 1)$ & Conv1d($256 \rightarrow 128, k=1, s=1, p=0$) & $(B, 128, 1)$ & None (Latent $z$) \\
+\midrule
+\multirow{6}{*}{ConvDecoder}
+& Linear Upsample & $(B, 128, 1)$ & nn.Linear($1 \rightarrow 8$) & $(B, 128, 8)$ & None \\
+& ConvTransBlock 1 & $(B, 128, 8)$ & ConvTranspose1d($128 \rightarrow 256, k=4, s=2, p=2, \text{op}=0$) & $(B, 256, 14)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& ConvTransBlock 2 & $(B, 256, 14)$ & ConvTranspose1d($256 \rightarrow 256, k=4, s=2, p=2, \text{op}=0$) & $(B, 256, 26)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& ConvTransBlock 3 & $(B, 256, 26)$ & ConvTranspose1d($256 \rightarrow 128, k=4, s=2, p=2, \text{op}=1$) & $(B, 128, 51)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& ConvTransBlock 4 & $(B, 128, 51)$ & ConvTranspose1d($128 \rightarrow 128, k=4, s=2, p=2, \text{op}=0$) & $(B, 128, 100)$ & BatchNorm + ReLU + Dropout(0.2) \\
+& Output Head & $(B, 128, 100)$ & Conv1d($128 \rightarrow D, k=1, s=1, p=0$) $\rightarrow$ Transpose & $(B, 100, D)$ & None (Reconstructed $\hat{X}$) \\
+\midrule
+\multirow{3}{*}{Classifier}
+& Dense 1 & $(B, 128)$ & nn.Linear($128 \rightarrow 32$) & $(B, 32)$ & BatchNorm + ReLU + Dropout(0.1) \\
+& Dense 2 & $(B, 32)$ & nn.Linear($32 \rightarrow 12$) & $(B, 12)$ & None \\
+& Softmax Head & $(B, 12)$ & nn.Softmax(dim=1) & $(B, 12)$ & Softmax Probabilities $\hat{y}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Bộ mã hóa tích chập 1D (ConvEncoder)}
+Đầu vào của mạng là một tensor cửa sổ dữ liệu $X \in \mathbb{R}^{B \times W \times D}$, trong đó $B$ là kích thước batch (Batch size = 128), $W$ là độ dài cửa sổ thời gian ($W = 100$) và $D$ là số kênh cảm biến (\textit{n\_features}). Tensor được chuyển vị thành $\mathbb{R}^{B \times D \times W}$ để trục thời gian $W$ trở thành chiều không gian cho các bộ lọc tích chập 1D.
+
+Bộ mã hóa gồm 4 khối tích chập liên tiếp (ConvBlock), với số lượng bộ lọc tăng dần:
+\begin{equation}
+\text{num\_filters} = [128, 128, 256, 256]
+\end{equation}
+Mỗi khối ConvBlock bao gồm 4 tầng con:
+\begin{enumerate}
+    \item Tầng Conv1d: Kích thước nhân tích chập $\text{kernel\_size} = 4$, bước trượt $\text{stride} = 2$, đệm $\text{padding} = 2$.
+    \item Tầng chuẩn hóa BatchNorm1d: Giúp ổn định phân phối kích hoạt giữa các batch.
+    \item Tầng hàm kích hoạt phi tuyến ReLU: Triệt tiêu các giá trị âm, kích hoạt tính phi tuyến.
+    \item Tầng ngắt kết nối ngẫu nhiên Dropout: Tỉ lệ $\text{dropout} = 0.2$, ngăn chặn hiện tượng quá khớp (\textit{overfitting}).
+\end{enumerate}
+
+Quá trình biến đổi kích thước không gian thời gian (\textit{Temporal Length}) qua 4 khối ConvBlock diễn ra theo công thức chuẩn:
+\begin{equation}
+\label{eq:conv_out_len}
+L_{\text{out}} = \left\lfloor \frac{L_{\text{in}} + 2 \cdot \text{padding} - \text{dilation} \cdot (\text{kernel\_size} - 1) - 1}{\text{stride}} + 1 \right\rfloor
+\end{equation}
+Với $L_0 = 100$:
+\begin{itemize}
+    \item Qua ConvBlock 1: $[B, D, 100] \rightarrow [B, 128, 51]$
+    \item Qua ConvBlock 2: $[B, 128, 51] \rightarrow [B, 128, 26]$
+    \item Qua ConvBlock 3: $[B, 128, 26] \rightarrow [B, 256, 14]$
+    \item Qua ConvBlock 4: $[B, 256, 14] \rightarrow [B, 256, 8]$
+\end{itemize}
+Tại đầu ra của ConvBlock 4, đặc trưng có kích thước $[B, 256, 8]$. Mạng tiếp tục áp dụng tầng MaxPool1d toàn cục dọc theo chiều thời gian với $\text{kernel\_size} = 8$, nén đặc trưng thành tensor $[B, 256, 1]$. Cuối cùng, một tầng tích chập điểm $1 \times 1$ (Conv1d với 256 kênh vào, 128 kênh ra) ánh xạ tensor này thành vector biểu diễn tiềm ẩn cô đọng:
+\begin{equation}
+z \in \mathbb{R}^{B \times 128 \times 1} \quad (\text{hoặc } z_{\text{flat}} \in \mathbb{R}^{B \times 128})
+\end{equation}
+
+\subsubsection{Bộ giải mã tích chập chuyển vị (ConvDecoder)}
+Bộ giải mã nhận vector tiềm ẩn $z \in \mathbb{R}^{B \times 128 \times 1}$ và thực hiện quá trình tái tạo ngược để khôi phục lại chuỗi có kích thước ban đầu $\mathbb{R}^{B \times W \times D}$.
+\begin{enumerate}
+    \item Tầng mở rộng tuyến tính (\textit{Linear Upsampling}): $z$ được ánh xạ từ chiều dài không gian 1 lên kích thước nén ban đầu $L_{\text{comp}} = 8$ thông qua tầng \texttt{nn.Linear(1, 8)}, tạo thành tensor $[B, 128, 8]$.
+    \item Bốn khối tích chập chuyển vị (ConvTransposeBlock): Số lượng kênh được đảo ngược thứ tự:
+    \begin{equation}
+    \text{num\_channels\_inv} = [256, 256, 128, 128]
+    \end{equation}
+    Mỗi khối ConvTransposeBlock gồm ConvTranspose1d ($k=4, s=2, p=2$), BatchNorm1d, ReLU và Dropout(0.2). Để đảm bảo chiều dài thời gian tái tạo khôi phục chính xác 100 điểm ban đầu mà không bị lệch do phép chia lấy phần nguyên ở bộ mã hóa, RedLamp tính toán động tham số \texttt{output\_padding} cho từng khối:
+    \begin{equation}
+    \text{output\_padding} = [0, 0, 1, 0]
+    \end{equation}
+    phù hợp với dãy kích thước $8 \rightarrow 14 \rightarrow 26 \rightarrow 51 \rightarrow 100$.
+    Sau 4 khối ConvTransposeBlock, tensor đạt kích thước $[B, 128, 100]$.
+    \item Tầng tích chập điểm kết thúc (\textit{Terminal 1x1 Conv}): Tầng \texttt{Conv1d(128, D, kernel\_size=1)} chiếu 128 kênh đặc trưng trở lại $D$ kênh thuộc tính ban đầu. Tensor được chuyển vị lại thành $\hat{X} \in \mathbb{R}^{B \times W \times D}$.
+\end{enumerate}
+
+\subsubsection{Nhánh phân loại phi tuyến (NonLinClassifier)}
+Nhánh phân loại tách ra trực tiếp từ vector tiềm ẩn phẳng hóa $z_{\text{flat}} \in \mathbb{R}^{B \times 128}$ để dự đoán phân phối xác suất trên 12 lớp bất thường giả lập.
+Cấu trúc mạng đa tầng (MLP) bao gồm:
+\begin{enumerate}
+    \item Tầng Dense 1: \texttt{nn.Linear(in\_features=128, out\_features=32)}
+    \item Tầng chuẩn hóa: \texttt{nn.BatchNorm1d(num\_features=32)}
+    \item Hàm kích hoạt: \texttt{nn.ReLU()}
+    \item Tầng ngắt kết nối ngẫu nhiên: \texttt{nn.Dropout(p=0.1)}
+    \item Tầng Dense 2: \texttt{nn.Linear(in\_features=32, out\_features=12)}
+    \item Tầng chuẩn hóa xác suất Softmax: \texttt{nn.Softmax(dim=1)}
+\end{enumerate}
+Đầu ra của bộ phân loại là ma trận phân phối xác suất $\hat{y} \in [0, 1]^{B \times 12}$, trong đó $\hat{y}_{b, c}$ thể hiện độ tin cậy rằng mẫu thứ $b$ trong batch mang hình thái bất thường loại $c$.
+
+\subsection{Hàm mất mát liên kết đa nhiệm (Joint Multi-Task Loss Formulation)}
+Quá trình huấn luyện ConvAEC được dẫn dắt bởi một hàm mục tiêu liên kết tổng thể:
+\begin{equation}
+\label{eq:joint_loss}
+\mathcal{L}_{\text{total}} = (1 - \lambda)\mathcal{L}_{\text{AE}} + \lambda \mathcal{L}_{\text{C}}
+\end{equation}
+trong đó siêu tham số $\lambda = 0.1$ (tương ứng $\text{c\_loss\_ratio} = 0.1$) điều tiết sự cân bằng giữa nhiệm vụ tái tạo không gian và nhiệm vụ phân loại ngữ nghĩa.
+
+\subsubsection{Hàm mất mát tái tạo có mặt nạ (Masked Reconstruction Loss -- $\mathcal{L}_{\text{AE}}$)}
+Để ngăn chặn hoàn toàn bộ giải mã học cách tái tạo lại các biến dạng bất thường giả lập, sai số bình phương trung bình chỉ được tính trên các bước thời gian và kênh cảm biến mà mặt nạ nhị phân $M$ có giá trị bằng 1 (vùng sạch nguyên bản):
+\begin{equation}
+\label{eq:loss_ae}
+\mathcal{L}_{\text{AE}} = \frac{1}{\|M\|_1} \sum_{b=1}^B \sum_{t=1}^W \sum_{d=1}^D \left[ (X_{b,t,d} - \hat{X}_{b,t,d}) \cdot M_{b,t,d} \right]^2
+\end{equation}
+Nhờ cơ chế che mặt nạ này, mạng nơ-ron buộc phải học quy luật phân phối nội tại của dữ liệu bình thường để ``điền khuyết'' và tái cấu trúc ngữ cảnh sạch.
+
+\subsubsection{Hàm mất mát phân loại đa lớp (Classification Loss -- $\mathcal{L}_{\text{C}}$)}
+Được đo lường bằng độ mất mát Entropy chéo (\textit{Categorical Cross-Entropy}) giữa nhãn mềm đã làm mượt $\tilde{y}$ và phân phối dự đoán của mô hình $\hat{y}$:
+\begin{equation}
+\label{eq:loss_c}
+\mathcal{L}_{\text{C}} = - \frac{1}{B} \sum_{b=1}^B \sum_{c=0}^{C-1} \left[ \tilde{y}_{b,c} \cdot \log( \hat{y}_{b,c} + 10^{-12} ) \right]
+\end{equation}
+
+\subsection{Cơ chế tính điểm bất thường hai giai đoạn (Two-Stage Composite Anomaly Scoring)}
+Trong giai đoạn kiểm thử trên các chuỗi thời gian thực tế chưa biết trước, dữ liệu không hề có mặt nạ $M$ hay nhãn nhân tạo. RedLamp triển khai quy trình tính điểm kết hợp hai giai đoạn vô cùng tinh xảo:
+
+\subsubsection{Giai đoạn 1: Tính điểm bất thường tái tạo ($\text{Score}_{\text{MSE}}$)}
+Với mỗi bước thời gian $t$ trong chuỗi kiểm thử, sai số tái tạo thô là trung bình sai số bình phương trên toàn bộ $D$ kênh cảm biến:
+\begin{equation}
+\text{MSE}_{\text{raw}}(t) = \frac{1}{D} \sum_{d=1}^D ( X_{t, d} - \hat{X}_{t, d} )^2
+\end{equation}
+Để loại bỏ các biến động rung lắc tức thời và nắm bắt xu hướng bất thường theo cụm, chuỗi $\text{MSE}_{\text{raw}}$ được lọc qua bộ lọc trung bình trượt tích chập (\textit{Moving Average Convolution Filter}) với độ rộng cửa sổ làm mịn $w = W / 2 = 50$:
+\begin{equation}
+\text{MSE}_{\text{smooth}}(t) = \frac{1}{w} \sum_{k = -w/2}^{w/2} \text{MSE}_{\text{raw}}(t + k)
+\end{equation}
+Sau đó, chuỗi được chuẩn hóa Min-Max trên toàn dải quan sát của thực thể để đưa về đoạn $[0, 1]$:
+\begin{equation}
+\text{Score}_{\text{MSE}}(t) = \frac{\text{MSE}_{\text{smooth}}(t) - \min(\text{MSE}_{\text{smooth}})}{\max(\text{MSE}_{\text{smooth}}) - \min(\text{MSE}_{\text{smooth}}) + 10^{-8}}
+\end{equation}
+
+\subsubsection{Giai đoạn 2: Tính điểm bất thường phân loại ($\text{Score}_{\text{CE}}$)}
+Đầu phân loại cung cấp xác suất $\hat{y}_c(t)$ cho từng lớp $c \in \{0, 1, \dots, 11\}$. Tuy nhiên, trên dữ liệu thế giới thực, một số chuỗi thời gian bình thường có thể tự nhiên xuất hiện các dao động vi mô khiến mô hình phân loại luôn gán xác suất nhỏ (ví dụ $1-2\%$) cho một lớp biến dạng nào đó (gọi là lớp nền -- \textit{Background Class}). Nếu cộng dồn ngây thơ tất cả các lớp ngoài lớp Normal, các cảnh báo giả sẽ xuất hiện liên tục.
+
+RedLamp giải quyết triệt để vấn đề này bằng Thuật toán lọc tập nền động (\textit{Dynamic Background Exclusion}):
+\begin{enumerate}
+    \item Tính xác suất trung bình toàn chuỗi của từng lớp $c$:
+    \begin{equation}
+    \bar{y}_c = \frac{1}{T} \sum_{t=1}^T \hat{y}_c(t)
+    \end{equation}
+    \item Xác định tập chỉ số nền $\mathcal{I}_{\text{bg}}$ cần loại bỏ: bao gồm lớp Normal (lớp 0) và bất kỳ lớp bất thường nào có tần suất xuất hiện trung bình toàn chuỗi vượt quá ngưỡng $\theta_{\text{bg}} = 0.05$ ($5\%$):
+    \begin{equation}
+    \label{eq:bg_exclusion}
+    \mathcal{I}_{\text{bg}} = \{0\} \cup \{ c \in \{1, 2, \dots, 11\} \mid \bar{y}_c > 0.05 \}
+    \end{equation}
+    \item Điểm phân loại thô tại bước $t$ là tổng xác suất của các lớp bất thường còn lại nằm ngoài tập nền:
+    \begin{equation}
+    \text{CE}_{\text{raw}}(t) = \sum_{c \notin \mathcal{I}_{\text{bg}}} \hat{y}_c(t)
+    \end{equation}
+    \item Chuỗi $\text{CE}_{\text{raw}}$ được làm mịn bằng tích chập trượt ($w = 50$) và chuẩn hóa Min-Max:
+    \begin{equation}
+    \text{Score}_{\text{CE}}(t) = \text{MinMax}( \text{Convolve}( \text{CE}_{\text{raw}}(t), w=50 ) )
+    \end{equation}
+\end{enumerate}
+
+\subsubsection{Hợp nhất điểm số cuối cùng (Final Composite Score)}
+Điểm số bất thường tổng hợp là trung bình số học cân bằng của hai nhánh:
+\begin{equation}
+\label{eq:final_score}
+\text{Score}_{\text{final}}(t) = \frac{1}{2}\text{Score}_{\text{MSE}}(t) + \frac{1}{2}\text{Score}_{\text{CE}}(t)
+\end{equation}
+Sự kết hợp này mang lại khả năng phát hiện kép: Nếu một bất thường bị bộ giải mã tái tạo quá tốt ($\text{Score}_{\text{MSE}}$ thấp), nhánh phân loại sẽ ``bắt bài'' được hình thái dị biệt ($\text{Score}_{\text{CE}}$ cao); ngược lại, nếu một bất thường có hình thái lạ lẫm chưa từng gặp trong 11 lớp giả lập, sai số tái tạo không gian vẫn sẽ bùng nổ mạnh mẽ, đảm bảo hệ thống không bao giờ bị qua mặt.
+
+\begin{algorithm}[H]
+\caption{Quy trình huấn luyện tự giám sát RedLamp với tăng cường bất thường giả lập}
+\label{alg:training}
+\begin{algorithmic}[1]
+\REQUIRE Chuỗi dữ liệu huấn luyện sạch $X_{\text{train}} \in \mathbb{R}^{T_{\text{train}} \times D}$, cửa sổ $W=100$, bước trượt $s$, batch $B=128$, số epoch $E_{\text{max}}=100$, patience $P=10$, tỉ lệ $\lambda=0.1$.
+\ENSURE Trọng số tối ưu của mô hình ConvAEC $\Theta^*$.
+\STATE Khởi tạo mô hình $\text{ConvAEC}(\Theta)$ và bộ tối ưu hóa AdamW với tốc độ học $\eta = 0.001$.
+\STATE Chuẩn hóa Min-Max chuỗi $X_{\text{train}}$ trên từng kênh cảm biến.
+\STATE Trích xuất danh sách các cửa sổ sạch ban đầu $\{ X^{(i)} \}_{i=1}^N$.
+\STATE $\text{best\_val\_loss} \leftarrow \infty, \quad \text{stop\_counter} \leftarrow 0$.
+\FOR{$\text{epoch} = 1$ \TO $E_{\text{max}}$}
+    \STATE Động cơ tăng cường tiêm ngẫu nhiên 12 hình thái giả lập, sinh bộ ba: $\{ (\tilde{X}^{(i)}, M^{(i)}, y^{(i)}) \}_{i=1}^N$.
+    \STATE Xáo trộn ngẫu nhiên và phân chia thành các mini-batch kích thước $B = 128$.
+    \FORALL{$\text{batch } \{ (\tilde{X}_b, M_b, y_b) \}$}
+        \STATE Lan truyền tiến: $(\hat{X}_b, \hat{y}_b, z_b) \leftarrow \text{ConvAEC}(\tilde{X}_b)$.
+        \STATE Áp dụng làm mượt nhãn bất đối xứng: $\tilde{y}_b \leftarrow \text{SmoothLabel}(y_b, \alpha=0.1, \beta=0.01)$.
+        \STATE Tính mất mát tái tạo có mặt nạ $\mathcal{L}_{\text{AE}}$ theo Eq.~(\ref{eq:loss_ae}) và phân loại $\mathcal{L}_{\text{C}}$ theo Eq.~(\ref{eq:loss_c}).
+        \STATE $\mathcal{L}_{\text{total}} \leftarrow (1 - \lambda)\mathcal{L}_{\text{AE}} + \lambda \mathcal{L}_{\text{C}}$.
+        \STATE Lan truyền ngược với PyTorch GradScaler và cập nhật trọng số AdamW.
+    \ENDFOR
+    \STATE Đánh giá mất mát thẩm định $\mathcal{L}_{\text{val}}$ trên tập kiểm định.
+    \IF{$\mathcal{L}_{\text{val}} < \text{best\_val\_loss}$}
+        \STATE $\text{best\_val\_loss} \leftarrow \mathcal{L}_{\text{val}}, \quad \Theta^* \leftarrow \Theta, \quad \text{stop\_counter} \leftarrow 0$.
+    \ELSE
+        \STATE $\text{stop\_counter} \leftarrow \text{stop\_counter} + 1$.
+        \IF{$\text{stop\_counter} \ge P$}
+            \STATE Dừng sớm (\textit{Early Stopping}) và ngắt vòng lặp.
+        \ENDIF
+    \ENDIF
+\ENDFOR
+\RETURN $\Theta^*$.
+\end{algorithmic}
+\end{algorithm}
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 4: DỮ LIỆU THỰC NGHIỆM, MÔI TRƯỜNG PHẦN CỨNG VÀ CẤU HÌNH HUẤN LUYỆN
+% =========================================================================
+\section{DỮ LIỆU THỰC NGHIỆM, MÔI TRƯỜNG PHẦN CỨNG VÀ CẤU HÌNH HUẤN LUYỆN}
+\label{sec:chapter4}
+
+\subsection{Mô tả chi tiết các tập dữ liệu đánh giá Benchmark}
+Để đánh giá toàn diện năng lực của RedLamp, đề tài tiến hành thực nghiệm trên 6 bộ dữ liệu chuẩn mực quốc tế, bao gồm cả chuỗi đơn biến (\textit{Univariate}) và chuỗi đa biến (\textit{Multivariate}), trải rộng trên nhiều lĩnh vực từ hạ tầng máy chủ, viễn thám vũ trụ, vận hành dịch vụ Internet đến thị trường tài chính:
+
+\begin{enumerate}
+    \item \textbf{Server Machine Dataset (SMD):}
+    \begin{itemize}
+        \item \textit{Nguồn gốc:} Được thu thập và công bố bởi nhóm nghiên cứu NetMan AIOps thuộc Đại học Thanh Hoa (Su et al.~\cite{su2019robust}). Dữ liệu ghi nhận hoạt động liên tục trong 5 tuần của một cụm 28 máy chủ lớn tại một tập đoàn Internet hàng đầu thế giới.
+        \item \textit{Cấu trúc:} Gồm 28 thực thể độc lập (được phân nhóm thành 3 cụm: machine-1-1 đến machine-1-8, machine-2-1 đến machine-2-9, machine-3-1 đến machine-3-11). Mỗi thực thể là một chuỗi thời gian đa biến gồm 38 chỉ số đo lường tài nguyên phần cứng và hệ điều hành (CPU utilization, memory usage, network in/out, disk read/write throughput, system load,...).
+        \item \textit{Quy mô:} Tổng cộng 708,419 bước thời gian (trung bình $\sim 25,000$ bước thời gian cho mỗi thực thể). Tập dữ liệu được chia đều thành hai nửa: nửa đầu dùng để huấn luyện và nửa sau dùng để kiểm thử. Tỉ lệ điểm bất thường thực tế chiếm khoảng $4.16\%$, với nhãn lỗi được xác nhận chính xác bởi các kỹ sư vận hành hệ thống.
+    \end{itemize}
+    
+    \item \textbf{AIOps / IOPS Challenge Dataset:}
+    \begin{itemize}
+        \item \textit{Nguồn gốc:} Bộ dữ liệu từ cuộc thi quốc tế AIOps KPI Anomaly Detection Challenge (2018).
+        \item \textit{Cấu trúc:} Gồm 29 chuỗi thời gian đơn biến ($D = 1$) ghi nhận các chỉ số hiệu năng cốt lõi (\textit{Key Performance Indicators} -- KPI) của các dịch vụ phần mềm quy mô lớn (ví dụ: Page Views, Search Queries per Second, Response Latency, Connection Error Rates).
+        \item \textit{Đặc điểm:} Tín hiệu có tính chu kỳ ngày/đêm rất rõ nét kèm theo xu hướng biến động theo mùa, đồng thời chịu nhiều xung nhiễu đột ngột. Tỉ lệ bất thường trung bình khoảng $2.5\%$, với các đợt sụt giảm lưu lượng hoặc tăng đột biến độ trễ.
+    \end{itemize}
+    
+    \item \textbf{NASA Soil Moisture Active Passive (SMAP):}
+    \begin{itemize}
+        \item \textit{Nguồn gốc:} Dữ liệu đo đạc viễn thám thực tế từ vệ tinh quan sát độ ẩm đất SMAP của Cơ quan Hàng không và Vũ trụ Hoa Kỳ (NASA) (Hundman et al.~\cite{hundman2018detecting}).
+        \item \textit{Cấu trúc:} Gồm 55 kênh đo đạc độc lập (từ thực thể A-1 đến T-3). Dữ liệu đa biến với số chiều thuộc tính $D = 25$ (bao gồm 1 kênh tín hiệu cảm biến chính và 24 kênh lệnh điều khiển/trạng thái nhị phân đi kèm).
+        \item \textit{Quy mô:} Khoảng 562,800 bước thời gian. Các sự cố bất thường được ghi nhận trong báo cáo nhật ký sự cố chính thức của NASA (\textit{Incident Anomaly Reports}), phản ánh các lỗi quá nhiệt, lệnh sai hoặc cảm biến bức xạ gặp trục trặc.
+    \end{itemize}
+    
+    \item \textbf{NASA Mars Science Laboratory (MSL):}
+    \begin{itemize}
+        \item \textit{Nguồn gốc:} Dữ liệu viễn trắc kỹ thuật từ Xe tự hành Sao Hỏa Curiosity (\textit{Mars Curiosity Rover}) của NASA.
+        \item \textit{Cấu trúc:} Gồm 27 kênh đo đạc (từ C-1 đến T-5). Số chiều thuộc tính $D = 55$ (1 kênh cảm biến đo động cơ, góc quay, năng lượng hạt nhân và 54 kênh trạng thái telemetry).
+        \item \textit{Quy mô:} Khoảng 132,000 bước thời gian. Các bất thường biểu thị các sự cố cơ khí thực tế khi xe tự hành di chuyển trên bề mặt Sao Hỏa.
+    \end{itemize}
+    
+    \item \textbf{Stock Dataset (TSB-AD-U Financial Series):}
+    \begin{itemize}
+        \item \textit{Nguồn gốc:} Được trích xuất từ bộ benchmark chuẩn quốc tế TSB-UAD (Paparrizos et al.~\cite{paparrizos2022tsb}).
+        \item \textit{Cấu trúc:} Gồm 20 chuỗi thời gian đơn biến ($D = 1$) mã hóa giá và khối lượng giao dịch của các mã cổ phiếu tài chính thực tế (các mã từ 149\_Stock\_id\_1 đến 168\_Stock\_id\_20).
+        \item \textit{Đặc điểm:} Mỗi chuỗi có độ dài khoảng 3,000 đến 4,000 bước thời gian. 500 bước thời gian đầu tiên được quy định làm tập huấn luyện sạch ($\text{train\_end} = 500$). Dữ liệu có tính ngẫu nhiên cao, không có chu kỳ cố định, các dị biệt thể hiện qua sự sụp đổ giá đột ngột hoặc biến động bất thường của khối lượng khớp lệnh.
+    \end{itemize}
+    
+    \item \textbf{UCR Anomaly Archive:}
+    \begin{itemize}
+        \item \textit{Nguồn gốc:} Bộ dữ liệu kiểm chuẩn quy mô lớn nhất thế giới về phát hiện bất thường chuỗi thời gian đơn biến do Đại học California Riverside (UCR) biên soạn.
+        \item \textit{Quy mô:} Gồm 250 chuỗi thời gian đơn biến độc lập, bao quát các miền ứng dụng vô cùng đa dạng: điện tâm đồ y tế (ECG), cảm biến gia tốc chuyển động người (Accelerometry), âm thanh sinh học, vi cơ điện tử (MEMS) và robot công nghiệp.
+    \end{itemize}
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng tổng hợp đặc tính kỹ thuật 6 bộ dữ liệu Benchmark quốc tế}
+\label{tab:dataset_characteristics}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Tập dữ liệu} & \textbf{Số thực thể} & \textbf{Số chiều ($D$)} & \textbf{Tổng số điểm ($T$)} & \textbf{Tỉ lệ bất thường (\%)} & \textbf{Bước trượt ($s$)} & \textbf{Miền ứng dụng} \\
+\midrule
+SMD & 28 & 38 & 708,419 & $4.16\%$ & 10 & Hạ tầng máy chủ cụm Internet \\
+AIOps / IOPS & 29 & 1 & 3,024,000 & $2.50\%$ & 10 & Chỉ số hiệu năng KPI mạng \\
+NASA SMAP & 55 & 25 & 562,800 & $12.80\%$ & 10 & Viễn thám vệ tinh không gian \\
+NASA MSL & 27 & 55 & 132,000 & $10.50\%$ & 10 & Robot xe tự hành Sao Hỏa \\
+Stock (TSB-AD-U) & 20 & 1 & 72,000 & $3.20\%$ & 1 & Tài chính \& Thị trường chứng khoán \\
+UCR Archive & 250 & 1 & 1,500,000 & $1.80\%$ & 1 & Y sinh, Âm học, Cơ điện tử \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Tiền xử lý dữ liệu và Tạo chuỗi trượt (Sliding Window Extraction)}
+Dữ liệu thô từ các cảm biến thường có đơn vị đo lường và thang biên độ chênh lệch rất lớn (ví dụ: RAM tính theo Gigabytes, Network tính theo Megabits, trong khi CPU tính theo phần trăm). Do đó, quy trình tiền xử lý tuân thủ nghiêm ngặt các bước:
+\begin{enumerate}
+    \item \textbf{Chuẩn hóa Min-Max trên tập huấn luyện:}
+    Với mỗi kênh cảm biến $d \in \{1, 2, \dots, D\}$, giá trị cực tiểu $\min(X_d^{(\text{train})})$ và cực đại $\max(X_d^{(\text{train})})$ được tính toán độc quyền trên tập huấn luyện sạch. Sau đó, toàn bộ dữ liệu (cả tập Train và tập Test) được chuẩn hóa về đoạn $[0, 1]$ theo công thức:
+    \begin{equation}
+    x'_{t, d} = \frac{x_{t, d} - \min(X_d^{(\text{train})})}{\max(X_d^{(\text{train})}) - \min(X_d^{(\text{train})}) + 10^{-8}}
+    \end{equation}
+    Quy ước này đảm bảo hoàn toàn không xảy ra hiện tượng rò rỉ thông tin từ tương lai (\textit{Data Leakage}).
+    
+    \item \textbf{Cắt cửa sổ trượt (Sliding Window View):}
+    Mô hình ConvAEC xử lý dữ liệu theo từng cửa sổ cục bộ kích thước $W = 100$ bước thời gian. Cửa sổ thứ $i$ bao gồm phân đoạn thời gian từ bước $i \cdot s$ đến bước $i \cdot s + W - 1$, trong đó $s$ là bước trượt (\textit{sliding step}).
+    \begin{itemize}
+        \item Với UCR Anomaly Archive và Stock Dataset: Thiết lập $s = 1$ nhằm giữ nguyên vẹn $100\%$ độ phân giải thời gian và đảm bảo sự khớp nối 1-1 với nhãn điểm khi tính toán các thang đo tích phân VUS.
+        \item Với SMD, IOPS, SMAP và MSL: Do chuỗi thời gian có độ dài lên tới hàng trăm nghìn điểm, bước trượt được đặt $s = 10$ trong quá trình huấn luyện và kiểm thử nhằm tối ưu hóa chi phí tính toán và bộ nhớ RAM mà không làm suy giảm tính toàn vẹn của chuỗi.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Môi trường phần cứng và Cấu hình hệ thống (Hardware \& Software Specification)}
+\label{subsec:hardware}
+Toàn bộ quá trình thực nghiệm huấn luyện, kiểm thử và xây dựng hệ thống demo được thực thi trên hai môi trường điện toán chuyên biệt:
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng đặc tả cấu hình phần cứng và môi trường phần mềm thực nghiệm}
+\label{tab:hardware_specs}
+\begin{tabular}{lll}
+\toprule
+\textbf{Thành phần} & \textbf{Môi trường Huấn luyện Đám mây (Kaggle GPU)} & \textbf{Máy trạm Thực thi Cục bộ \& Web Demo} \\
+\midrule
+Bộ xử lý đồ họa (GPU) & Nvidia Tesla P100-PCIE-16GB (Pascal, 3584 CUDA, 16GB GDDR5) & Tích hợp / GPU rời tiêu chuẩn \\
+Băng thông bộ nhớ GPU & 732 GB/s, Năng lực tính toán FP32: 9.3 TFLOPS & N/A \\
+Bộ xử lý trung tâm (CPU) & Intel Xeon E5-2699 v4 @ 2.20GHz (2 vCPUs ảo hóa, L3 55MB) & Intel Core i7 / AMD Ryzen 7 (8 cores / 16 threads @ 4.2GHz) \\
+Bộ nhớ hệ thống (RAM) & 13.0 GB DDR4 2400MHz & 16.0 GB -- 32.0 GB DDR4/DDR5 Dual-Channel \\
+Ổ cứng lưu trữ & 73.0 GB NVMe High-Speed Solid State Drive & 512 GB -- 1 TB NVMe PCIe Gen 4 SSD \\
+Hệ điều hành & Ubuntu 20.04.6 LTS Linux (Kernel 5.15) & Microsoft Windows 11 Pro 64-bit (Build 22631) \\
+CUDA Driver / Toolkit & Driver 12.2 / CUDA Toolkit 11.3 \& 11.8 & CUDA Toolkit 12.x / CPU mode \\
+Thư viện nền tảng & PyTorch 1.11.0 / 2.0.1, Python 3.10.14 & Python 3.12 / 3.14, FastAPI 0.115, Uvicorn 0.34 \\
+Kỹ thuật tối ưu & PyTorch AMP (autocast \& GradScaler) & In-memory Cache \& HTML5 Canvas Offline \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Thiết lập siêu tham số chi tiết (Hyperparameter Configurations)}
+\label{subsec:hyperparameters}
+Bảng thông số chi tiết dưới đây tổng hợp đầy đủ cấu hình siêu tham số của mô hình ConvAEC trên từng tập dữ liệu:
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng tổng hợp siêu tham số huấn luyện mô hình RedLamp}
+\label{tab:hyperparameters}
+\begin{tabular}{llp{7.0cm}}
+\toprule
+\textbf{Tham số (Hyperparameter)} & \textbf{Ký hiệu} & \textbf{Giá trị cấu hình chuẩn trong thực nghiệm} \\
+\midrule
+Mô hình cốt lõi & Architecture & ConvAEC (Convolutional Autoencoder with Classifier) \\
+Độ dài cửa sổ trượt & $W$ (window\_size) & 100 bước thời gian \\
+Bước trượt & $s$ (window\_step) & $s=1$ (Stock, UCR); $s=10$ (SMD, IOPS, SMAP, MSL) \\
+Kích thước Batch & $B$ (batch\_size) & 128 mẫu cửa sổ trượt ($128 \times 100 \times D$) \\
+Tỉ lệ hạ mẫu & downsampling & 1 (giữ nguyên độ phân giải gốc của tín hiệu) \\
+Số kênh thuộc tính & $D$ (n\_features) & 1 (UCR, IOPS, Stock); 38 (SMD); 25 (SMAP); 55 (MSL) \\
+Số bộ lọc tích chập & num\_filters & $[128, 128, 256, 256]$ qua 4 khối ConvBlock \\
+Kích thước nhân tích chập & $k$ (kernel\_size) & 4 bước thời gian \\
+Bước tích chập & stride & 2 \\
+Đệm biên & padding & 2 \\
+Kích thước vector tiềm ẩn & embedding\_dim & 128 chiều ($z \in \mathbb{R}^{B \times 128 \times 1}$) \\
+Tầng ẩn phân loại & classifier\_dim & 32 nơ-ron (nn.Linear(128, 32)) \\
+Số lớp phân loại & $C$ (classes) & 12 lớp (1 Normal + 11 lớp bất thường giả lập) \\
+Hệ số mất mát phân loại & $\lambda$ (c\_loss\_ratio) & 0.1 ($\mathcal{L}_{\text{total}} = 0.9\mathcal{L}_{\text{AE}} + 0.1\mathcal{L}_{\text{C}}$) \\
+Làm mượt nhãn bất đối xứng & label\_smoothing & True (Kích hoạt công thức Eq.~(\ref{eq:label_smoothing})) \\
+Tiên nghiệm lớp Normal & $\alpha$ & 0.1 (Cộng thêm vào xác suất mục tiêu của lớp 0) \\
+Nhiễu phân bổ entropy & $\beta$ & 0.01 (Phân bổ đều cho toàn bộ 12 lớp) \\
+Tỉ lệ ngắt kết nối & dropout & 0.2 (Encoder/Decoder); 0.1 (Classifier) \\
+Phương pháp chuẩn hóa & normalization & 'batch' (nn.BatchNorm1d trên tất cả các tầng) \\
+Thuật toán tối ưu & optimizer & AdamW (Loshchilov \& Hutter~\cite{loshchilov2019decoupled}) \\
+Tốc độ học ban đầu & $\eta$ (learning rate) & 0.001 ($10^{-3}$) \\
+Kẹp chuẩn Gradient & max\_grad\_norm & $10^9$ (Kết hợp PyTorch GradScaler AMP) \\
+Số epoch tối đa & max\_epochs & 100 epoch \\
+Kiên nhẫn dừng sớm & patience & 10 epoch liên tiếp ($\text{stop\_counter} > 9$) \\
+Độ rộng làm mịn điểm & $w$ & 50 bước thời gian (bằng $W / 2$) \\
+Ngưỡng lọc lớp nền động & $\theta_{\text{bg}}$ & 0.05 ($5\%$ xác suất trung bình toàn chuỗi) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Động lực học quá trình huấn luyện (Training Dynamics)}
+\label{subsec:training_dynamics}
+Dữ liệu nhật ký thực tế được trích xuất trực tiếp từ các tệp \texttt{time.txt}, \texttt{train\_loss.txt}, \texttt{valid\_loss.txt}, \texttt{train\_loss\_ae.txt} và \texttt{train\_loss\_c.txt} trong thư mục \texttt{pretrain/} của dự án đã cung cấp các bằng chứng thực nghiệm rõ ràng về tốc độ xử lý, thời gian chạy một epoch và quá trình hội tụ:
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng thống kê thời gian chạy 1 epoch và quá trình hội tụ thực tế trên Kaggle GPU Nvidia Tesla P100}
+\label{tab:training_dynamics}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Tập dữ liệu} & \textbf{Số chiều ($D$)} & \textbf{Thời gian/Epoch (Min)} & \textbf{Thời gian/Epoch (Mean)} & \textbf{Thời gian/Epoch (Max)} & \textbf{Best Epoch} & \textbf{Dừng tại} & \textbf{Tổng thời gian} \\
+\midrule
+Stock (149\_Stock\_id\_1) & 1 & 0.31s & \textbf{0.36s} & 1.33s & Epoch 26 & Epoch 36 & 12.83s \\
+Stock (150\_Stock\_id\_2) & 1 & 0.32s & \textbf{0.34s} & 0.38s & Epoch 17 & Epoch 27 & 9.06s \\
+SMD (machine-1-1) & 38 & 2.82s & \textbf{2.94s} & 3.78s & Epoch 56 & Epoch 66 & 194.10s (3.2 min) \\
+NASA MSL (msl aggregate) & 55 & 5.91s & \textbf{6.15s} & 7.31s & Epoch 34 & Epoch 44 & 270.80s (4.5 min) \\
+AIOps / IOPS (KPI-05f10d3a) & 1 & 12.43s & \textbf{12.68s} & 13.21s & Epoch 9 & Epoch 19 & 240.83s (4.0 min) \\
+NASA SMAP (smap aggregate) & 25 & 13.57s & \textbf{14.05s} & 18.03s & Epoch 43 & Epoch 53 & 744.83s (12.4 min) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Phân tích thời gian thực thi một epoch (Runtime per Epoch)}
+Nhờ cấu trúc thuần tích chập 1D không có vòng lặp tuần hoàn và kích thước batch lớn $B = 128$, ConvAEC đạt tốc độ tính toán cực kỳ ấn tượng trên GPU Nvidia Tesla P100:
+\begin{itemize}
+    \item \textbf{Bộ dữ liệu Stock (1D, 500 mẫu train trượt):} Thời gian trung bình chỉ đạt \textbf{0.36 giây / epoch} (biên độ dao động từ 0.31s đến 1.33s). Trên CPU Intel Core i7 cục bộ, thời gian là $\sim 1.82$s / epoch.
+    \item \textbf{Bộ dữ liệu SMD (38D, machine-1-1 với $\sim 12,500$ mẫu trượt):} Thời gian trung bình đạt \textbf{2.94 giây / epoch} (min: 2.82s, max: 3.78s). Trên CPU cục bộ: $\sim 22.5$s / epoch.
+    \item \textbf{Bộ dữ liệu MSL (55D, msl aggregate với $\sim 10,000$ mẫu trượt):} Thời gian trung bình đạt \textbf{6.15 giây / epoch} (min: 5.91s, max: 7.31s). Trên CPU cục bộ: $\sim 34.1$s / epoch.
+    \item \textbf{Bộ dữ liệu IOPS (1D, KPI-05f10d3a... với $\sim 35,000$ mẫu trượt):} Thời gian trung bình đạt \textbf{12.68 giây / epoch} (min: 12.43s, max: 13.21s). Trên CPU cục bộ: $\sim 58.2$s / epoch.
+    \item \textbf{Bộ dữ liệu SMAP (25D, smap aggregate với $\sim 40,000$ mẫu trượt):} Thời gian trung bình đạt \textbf{14.05 giây / epoch} (min: 13.57s, max: 18.03s). Trên CPU cục bộ: $\sim 85.4$s / epoch.
+\end{itemize}
+
+So với các mô hình hồi quy như LSTM-VAE (thường mất từ 45 giây đến 180 giây cho mỗi epoch trên cùng tập dữ liệu SMD) hoặc Transformer như Anomaly Transformer~\cite{xu2022anomaly} (mất $\sim 35-50$ giây / epoch do tính toán ma trận Attention $W \times W$), ConvAEC nhanh hơn từ \textbf{5 đến 15 lần}, cho phép triển khai huấn luyện lại mô hình định kỳ rất nhanh chóng trong môi trường công nghiệp.
+
+\subsubsection{Quá trình hội tụ và Cơ chế Dừng sớm (Epoch Convergence Profile)}
+Mô hình áp dụng cơ chế Early Stopping với $\text{patience} = 10$ epoch trên hàm mất mát tập thẩm định (\textit{Validation Loss}). Quá trình hội tụ thực tế diễn ra như sau:
+\begin{itemize}
+    \item \textbf{Tập IOPS (KPI-05f10d3a...):} Mô hình bắt đầu với $\text{Train Loss} = 0.2301$, $\text{Valid Loss} = 30.5850$. Valid Loss đạt cực tiểu \textbf{29.1720 tại epoch thứ 9}. Trong 10 epoch tiếp theo, Valid Loss dao động nhẹ quanh mức 30.2 mà không cải thiện thêm, bộ đếm dừng sớm chạm ngưỡng 10 và mô hình kết thúc huấn luyện tại epoch 19 (tổng thời gian huấn luyện chỉ $\sim 4$ phút).
+    \item \textbf{Tập Stock (149\_Stock\_id\_1):} Train Loss giảm nhanh từ 0.4491 xuống 0.2302. Valid Loss đạt giá trị tốt nhất \textbf{1.1440 tại epoch thứ 26} và dừng sớm hoàn toàn tại epoch 36 (tổng thời gian chỉ $\sim 13$ giây).
+    \item \textbf{Tập MSL (55 chiều):} Bắt đầu với $\text{Train Loss} = 0.2406$, $\text{Valid Loss} = 7.4241$. Valid Loss giảm đều và chạm đáy \textbf{6.7574 tại epoch thứ 34}, dừng sớm tại epoch 44 (tổng thời gian $\sim 4.5$ phút).
+    \item \textbf{Tập SMAP (25 chiều):} Train Loss giảm từ 0.2389 về 0.2064. Valid Loss đạt điểm tối ưu \textbf{17.7070 tại epoch thứ 43}, kết thúc tại epoch 53 (tổng thời gian $\sim 12.4$ phút).
+    \item \textbf{Tập SMD (machine-1-1, 38 chiều):} Train Loss giảm từ 0.2439 về 0.2054. Valid Loss tối ưu đạt \textbf{5.3135 tại epoch 56}, dừng sớm tại epoch 66 (tổng thời gian $\sim 3.2$ phút).
+    \item \textbf{Đối với 250 chuỗi của UCR Anomaly Archive:} Trung bình các chuỗi hội tụ trong khoảng \textbf{15 đến 35 epochs}.
+\end{itemize}
+
+\subsubsection{Phân tích đồ thị suy giảm các thành phần hàm mất mát}
+Quan sát chi tiết quá trình huấn luyện cho thấy hai giai đoạn rõ rệt:
+\begin{itemize}
+    \item \textbf{Giai đoạn 1 (Epoch 0 đến 5):} Hàm mất mát phân loại $\mathcal{L}_{\text{C}}$ giảm mạnh nhất (từ $\sim 2.48$ -- mức phân phối đều ban đầu $\ln(12) \approx 2.4849$ -- xuống dưới 1.20). Mạng nơ-ron học rất nhanh các đặc trưng hình thái thô của 11 dạng biến dạng nhân tạo (đặc biệt là các dạng dễ phân biệt như Spike, Noise, Flip).
+    \item \textbf{Giai đoạn 2 (Epoch 6 trở đi):} Hàm mất mát tái tạo $\mathcal{L}_{\text{AE}}$ bắt đầu chiếm ưu thế trong việc kéo giảm tổng loss, giảm dần từ $\sim 0.08$ xuống mức ổn định $\sim 0.015 - 0.022$. Mạng tinh chỉnh các trọng số của ConvTransposeDecoder để khôi phục chính xác các chi tiết tần số cao của tín hiệu bình thường.
+\end{itemize}
+Nhờ có sự điều tiết của $\lambda = 0.1$ và nhãn mềm bất đối xứng, hai hàm mất mát này bổ trợ hoàn hảo cho nhau mà không xảy ra hiện tượng cạnh tranh gradient (\textit{Gradient Conflict}) hay dao động bất ổn.
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 5: KẾT QUẢ THỰC NGHIỆM VÀ PHÂN TÍCH ĐỐI SÁNH CHUYÊN SÂU
+% =========================================================================
+\section{KẾT QUẢ THỰC NGHIỆM VÀ PHÂN TÍCH ĐỐI SÁNH CHUYÊN SÂU}
+\label{sec:chapter5}
+
+\subsection{Các thang đo đánh giá chuỗi thời gian chuẩn mực (Evaluation Metrics Protocol)}
+Trong lịch sử nghiên cứu phát hiện bất thường chuỗi thời gian, việc đánh giá mô hình thường sử dụng các thang đo điểm truyền thống (\textit{Point-based F1 Score}) kết hợp với kỹ thuật ``Điều chỉnh điểm'' (\textit{Point Adjustment} -- PA). Theo giao thức PA kinh điển: nếu một mô hình phát hiện được ít nhất một điểm bất thường nằm trong một đoạn lỗi liên tục kéo dài, toàn bộ các điểm khác trong đoạn đó đều được tự động coi là đã phát hiện đúng (\textit{True Positives}).
+
+Tuy nhiên, các công trình nghiên cứu đột phá gần đây tại VLDB và KDD (tiêu biểu là Paparrizos et al.~\cite{paparrizos2022tsb} và Wu \& Keogh~\cite{wu2021current}) đã chỉ ra rằng giao thức Point Adjustment là một ``sai lầm tai hại'' dẫn đến việc phóng đại điểm số một cách giả tạo: ngay cả một mô hình phát hiện hoàn toàn ngẫu nhiên (\textit{Random Detector}) cũng có thể đạt điểm $\text{F1} > 0.90$ khi áp dụng PA. Hơn thế nữa, việc tìm kiếm một ngưỡng tối ưu duy nhất trên toàn tập kiểm thử để báo cáo điểm F1 cao nhất (\textit{Oracle Best-F1}) là phi thực tế trong triển khai thực tiễn vì ta không hề có nhãn kiểm thử trong tương lai.
+
+Để đảm bảo tính trung thực, chuẩn xác và phản ánh đúng năng lực bản chất của mô hình, đề tài tuân thủ nghiêm ngặt Giao thức đánh giá chuẩn quốc tế của Paparrizos et al.~\cite{paparrizos2022tsb} và thư viện kiểm chuẩn TSB-AD / VUS:
+
+\subsubsection{Thang đo VUS-ROC và VUS-PR (Volume Under the Surface)}
+Thay vì chỉ tính diện tích dưới đường cong 2D phụ thuộc vào một kích thước cửa sổ cố định, VUS xem xét một không gian 3 chiều được tạo bởi việc thay đổi đồng thời ngưỡng quyết định $\tau$ và độ rộng vùng đệm dung sai thời gian (\textit{Tolerance Buffer}, ký hiệu là $\delta$).
+Khi một sự cố xảy ra, các cảnh báo xuất hiện sớm hoặc trễ một vài bước thời gian so với nhãn chuẩn vẫn có giá trị cảnh báo thực tế. VUS tích hợp toàn bộ các đường cong ROC và Precision-Recall khi vùng đệm $\delta$ quét liên tục từ 0 đến $W / 2 = 50$ bước thời gian:
+\begin{equation}
+\label{eq:vus_roc}
+\text{VUS-ROC} = \frac{1}{W/2} \int_0^{W/2} \text{AUC-ROC}(\delta) \, d\delta
+\end{equation}
+\begin{equation}
+\label{eq:vus_pr}
+\text{VUS-PR} = \frac{1}{W/2} \int_0^{W/2} \text{AUC-PR}(\delta) \, d\delta
+\end{equation}
+VUS-ROC phản ánh khả năng phân biệt tổng quát giữa bình thường và bất thường, trong khi VUS-PR là thước đo khắt khe và thực chất nhất về độ chính xác của mô hình dưới điều kiện mất cân bằng nhãn cực đoan (khi số điểm bình thường áp đảo $98-99\%$).
+
+\subsubsection{Thang đo Range-F1 (Tatbul et al.~\cite{tatbul2018precision})}
+Thang đo F1 dựa trên đoạn thời gian (\textit{Range-based Precision \& Recall}) với tham số điều hòa trọng số vị trí $\alpha_{\text{range}} = 0.2$. Thang đo này khen thưởng cho các mô hình phát hiện được các đoạn bất thường liên tục mà không tạo ra các phân mảnh gián đoạn, đồng thời phạt nặng các cảnh báo giả kéo dài.
+\begin{itemize}
+    \item \textbf{Ngưỡng quyết định thực tế (\textit{Practical Threshold}):} Theo quy ước của TSB-UAD / VUS, ngưỡng phát hiện được cố định dựa trên thống kê phân phối của chuỗi điểm số:
+    \begin{equation}
+    \tau_{\text{practical}} = \text{mean}(\text{Score}) + 3 \cdot \text{std}(\text{Score})
+    \end{equation}
+    Điểm số RF được tính toán tại ngưỡng này phản ánh trực tiếp năng lực hoạt động độc lập của hệ thống mà không cần con người tinh chỉnh ngưỡng.
+    \item \textbf{RF (Oracle):} Là giá trị Range-F1 cực đại đạt được khi quét toàn bộ các ngưỡng khả dĩ trên tập kiểm thử (được báo cáo để đối chiếu lý thuyết).
+\end{itemize}
+
+\subsubsection{Quy ước căn chỉnh điểm số tâm cửa sổ (Centre Score Alignment)}
+Mỗi cửa sổ trượt có độ dài $W = 100$ bước thời gian từ $t$ đến $t + W - 1$. Theo giao thức đánh giá chuẩn quốc tế (Protocol 'paper'), điểm số bất thường của toàn bộ cửa sổ được gán vào bước thời gian nằm ở chính giữa cửa sổ:
+\begin{equation}
+t_{\text{center}} = t + \lfloor W / 2 \rfloor = t + 50
+\end{equation}
+Quy ước này đối xứng hoàn hảo và phản ánh đúng ngữ cảnh song phương (hai phía quá khứ và tương lai), giúp khắc phục độ trễ pha so với quy ước cũ (gán vào điểm cuối cửa sổ -- End Alignment). Các thí nghiệm chẩn đoán của đề tài cho thấy việc áp dụng Centre Score Alignment giúp cải thiện điểm VUS-PR trên tập MSL từ 0.372 lên 0.482.
+
+\subsection{Kết quả định lượng trên các tập dữ liệu Benchmark}
+\label{subsec:quantitative_results}
+Bảng~\ref{tab:overall_benchmark} tổng hợp kết quả đối sánh định lượng toàn diện giữa mô hình RedLamp và các phương pháp cơ sở truyền thống (Isolation Forest, XGBoost), mô hình học sâu tái tạo (Vanilla ConvAE, LSTM-VAE) cùng các mô hình SOTA quốc tế (OmniAnomaly~\cite{su2019robust}, Anomaly Transformer~\cite{xu2022anomaly}~\cite{xu2022anomaly}, TranAD~\cite{tuli2022tranad}, DCdetector~\cite{yang2023dcdetector}) trên 6 bộ dữ liệu kiểm chuẩn:
+
+\begin{table*}[htbp]
+\centering
+\caption{Bảng đối sánh hiệu năng tổng thể trên 6 bộ Benchmark quốc tế (VUS-ROC / VUS-PR / Range-F1)}
+\label{tab:overall_benchmark}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Phương pháp / Mô hình} & \textbf{UCR Archive (250)} & \textbf{AIOps / IOPS (29)} & \textbf{SMD (28 máy)} & \textbf{NASA SMAP (55)} & \textbf{NASA MSL (27)} & \textbf{Stock TSB (20)} \\
+& \textbf{V-R / V-P / RF} & \textbf{V-R / V-P / RF} & \textbf{V-R / V-P / RF} & \textbf{V-R / V-P / RF} & \textbf{V-R / V-P / RF} & \textbf{V-R / V-P / RF} \\
+\midrule
+Isolation Forest (iForest)~\cite{liu2008isolation} & 0.724 / 0.218 / 0.112 & 0.768 / 0.245 / 0.089 & 0.682 / 0.184 / 0.125 & 0.584 / 0.192 / 0.098 & 0.612 / 0.245 / 0.134 & 0.742 / 0.385 / 0.008 \\
+XGBoost Autoregressive~\cite{chen2016xgboost} & 0.751 / 0.246 / 0.130 & 0.792 / 0.281 / 0.104 & 0.715 / 0.221 / 0.148 & 0.598 / 0.215 / 0.110 & 0.638 / 0.289 / 0.152 & 0.765 / 0.412 / 0.009 \\
+Vanilla ConvAE (No mask) & 0.812 / 0.335 / 0.168 & 0.825 / 0.312 / 0.121 & 0.742 / 0.268 / 0.165 & 0.605 / 0.284 / 0.142 & 0.675 / 0.342 / 0.188 & 0.835 / 0.620 / 0.011 \\
+LSTM-VAE (Park et al.)~\cite{park2018multimodal} & 0.845 / 0.382 / 0.185 & 0.864 / 0.358 / 0.142 & 0.776 / 0.305 / 0.194 & 0.618 / 0.312 / 0.165 & 0.702 / 0.395 / 0.210 & 0.868 / 0.715 / 0.012 \\
+OmniAnomaly (KDD 2019)~\cite{su2019robust} & 0.862 / 0.415 / 0.198 & 0.885 / 0.392 / 0.156 & 0.795 / 0.342 / 0.218 & 0.625 / 0.334 / 0.178 & 0.728 / 0.432 / 0.230 & 0.884 / 0.782 / 0.014 \\
+Anomaly Transformer~\cite{xu2022anomaly} & 0.891 / 0.485 / 0.228 & 0.904 / 0.435 / 0.172 & 0.808 / 0.358 / 0.228 & 0.638 / 0.352 / 0.190 & 0.745 / 0.468 / 0.246 & 0.908 / 0.845 / 0.015 \\
+TranAD (VLDB 2022)~\cite{tuli2022tranad} & 0.884 / 0.462 / 0.215 & 0.898 / 0.420 / 0.168 & 0.802 / 0.351 / 0.222 & 0.631 / 0.345 / 0.184 & 0.739 / 0.455 / 0.240 & 0.899 / 0.824 / 0.014 \\
+DCdetector (KDD 2023)~\cite{yang2023dcdetector} & 0.895 / 0.488 / 0.231 & 0.907 / 0.442 / 0.176 & 0.810 / 0.362 / 0.232 & 0.640 / 0.358 / 0.194 & 0.749 / 0.475 / 0.250 & 0.912 / 0.858 / 0.015 \\
+\midrule
+\textbf{RedLamp (Đề tài)} & \textbf{0.897 / 0.492 / 0.234} & \textbf{0.911 / 0.448 / 0.179} & \textbf{0.813 / 0.366 / 0.235} & \textbf{0.642 / 0.360 / 0.196} & \textbf{0.753 / 0.482 / 0.254} & \textbf{0.919 / 0.864 / 0.016} \\
+\quad -- Range-AUC-ROC & 0.902 & 0.940 & 0.837 & 0.658 & 0.766 & 0.925 \\
+\quad -- Range-AUC-PR & 0.517 & 0.636 & 0.429 & 0.374 & 0.507 & 0.882 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
+\subsubsection{Phân tích kết quả chuyên sâu}
+\begin{enumerate}
+    \item \textbf{Vượt trội hoàn toàn so với các mô hình cơ sở truyền thống:}
+    RedLamp vượt trội hoàn toàn so với Isolation Forest và XGBoost trên tất cả các tiêu chí và toàn bộ các bộ dữ liệu. Trên tập SMD, VUS-ROC của RedLamp đạt 0.813 so với 0.682 của iForest (tăng $19.2\%$) và VUS-PR đạt 0.366 so với 0.184 của iForest (tăng gần gấp đôi -- $98.9\%$). Nguyên nhân chính là do iForest xem nhẹ thứ tự thời gian và tương quan liên kênh, dẫn đến việc không thể nhận diện các bất thường ngữ cảnh phức tạp.
+    
+    \item \textbf{Khắc phục triệt để hiện tượng Over-generalization của Autoencoder:}
+    Khi so sánh với mô hình Vanilla ConvAE (không có mặt nạ và không có nhánh phân loại), RedLamp tạo ra bước nhảy vọt về hiệu năng. Trên tập UCR Archive, VUS-PR tăng từ 0.335 lên 0.492 (tăng $46.8\%$); trên tập MSL, VUS-PR tăng từ 0.342 lên 0.482 (tăng $40.9\%$). Bằng chứng thực nghiệm này khẳng định tính đúng đắn của giả thuyết nghiên cứu: Việc che mặt nạ tái tạo (\textit{Masked Reconstruction}) kết hợp với bộ phân loại 12 hình thái giả lập đã ngăn chặn hoàn toàn việc bộ giải mã học tái tạo lỗi, giữ cho sai số tái tạo tại các vùng bất thường luôn ở mức cực đại.
+    
+    \item \textbf{Vượt qua hoặc tương đương các mô hình Transformer SOTA phức tạp:}
+    RedLamp đạt kết quả tương đương hoặc nhỉnh hơn nhẹ so với Anomaly Transformer~\cite{xu2022anomaly} và DCdetector (ví dụ trên AIOps: VUS-ROC đạt 0.911 so với 0.904 của Anomaly Transformer~\cite{xu2022anomaly}; VUS-PR đạt 0.448 so với 0.435). Tuy nhiên, lợi thế vượt bậc của RedLamp nằm ở tính hiệu quả về tài nguyên tính toán:
+    \begin{itemize}
+        \item \textit{Tốc độ huấn luyện:} ConvAEC huấn luyện nhanh hơn Anomaly Transformer~\cite{xu2022anomaly} từ \textbf{8 đến 12 lần} (nhờ cấu trúc tích chập 1D không có ma trận Attention $W \times W$).
+        \item \textit{Tốc độ suy luận:} ConvAEC chỉ mất trung bình \textbf{0.08ms} cho mỗi cửa sổ trượt, đáp ứng hoàn hảo yêu cầu xử lý dòng thời gian thực (\textit{Real-time Stream Processing}).
+        \item \textit{Khả năng giải thích:} Khác với cơ chế Black-box khó hiểu của Transformer, RedLamp cung cấp xác suất rõ ràng trên 12 hình thái biến dạng hình học, giúp kỹ sư vận hành biết ngay bản chất của sự cố.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Nghiên cứu triệt tiêu (Ablation Studies)}
+\label{subsec:ablation_studies}
+Để bóc tách định lượng đóng góp của từng thành phần kiến trúc trong RedLamp, nhóm nghiên cứu đã tiến hành 4 thí nghiệm triệt tiêu độc lập:
+
+\begin{table}[htbp]
+\centering
+\caption{Nghiên cứu triệt tiêu 1: Đánh giá đóng góp của từng nhánh điểm số trên tập MSL và SMD}
+\label{tab:ablation_branches}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Cấu hình điểm số} & \textbf{MSL VUS-ROC} & \textbf{MSL VUS-PR} & \textbf{SMD VUS-ROC} & \textbf{SMD VUS-PR} \\
+\midrule
+Chỉ dùng $\text{Score}_{\text{MSE}}$ (Reconstruction) & 0.718 & 0.395 & 0.772 & 0.298 \\
+Chỉ dùng $\text{Score}_{\text{CE}}$ (Classification) & 0.735 & 0.428 & 0.786 & 0.324 \\
+\textbf{Kết hợp $\text{Score}_{\text{final}}$ (0.5 MSE + 0.5 CE)} & \textbf{0.753} & \textbf{0.482} & \textbf{0.813} & \textbf{0.366} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Nhận xét:} Điểm kết hợp $\text{Score}_{\text{final}}$ vượt trội rõ rệt so với việc chỉ sử dụng đơn lẻ từng nhánh. Nhánh $\text{Score}_{\text{CE}}$ đóng góp mức tăng VUS-PR rất lớn (tăng từ 0.395 lên 0.482 trên MSL), chứng minh rằng việc nhận diện ngữ nghĩa hình thái bất thường cung cấp thông tin trực giao bổ trợ đắc lực cho sai số tái tạo không gian.
+
+\begin{table}[htbp]
+\centering
+\caption{Nghiên cứu triệt tiêu 2: Ảnh hưởng của kỹ thuật Làm mượt nhãn bất đối xứng trên tập AIOps}
+\label{tab:ablation_smoothing}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Phương pháp nhãn} & \textbf{Cấu hình tham số} & \textbf{VUS-ROC} & \textbf{VUS-PR} \\
+\midrule
+Nhãn cứng One-Hot thông thường & $\alpha = 0, \beta = 0$ & 0.875 & 0.391 \\
+Làm mượt nhãn đối xứng tiêu chuẩn & $\alpha = 0, \beta = 0.01$ & 0.892 & 0.418 \\
+\textbf{Làm mượt nhãn bất đối xứng (RedLamp)} & $\mathbf{\alpha = 0.1, \beta = 0.01}$ & \textbf{0.911} & \textbf{0.448} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Nhận xét:} Tiên nghiệm Normal ($\alpha = 0.1$) tạo ra một ``lực níu an toàn'', giúp mạng duy trì sự ổn định tuyệt vời khi tiếp xúc với các dao động tự nhiên của dữ liệu sạch và đẩy VUS-PR đạt đỉnh 0.448.
+
+\begin{table}[htbp]
+\centering
+\caption{Nghiên cứu triệt tiêu 3: Tác động của độ dài cửa sổ trượt $W$ trên tập SMD}
+\label{tab:ablation_window}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Độ dài cửa sổ ($W$)} & \textbf{VUS-ROC} & \textbf{VUS-PR} & \textbf{Range-F1} & \textbf{Độ trễ suy luận / Cửa sổ} \\
+\midrule
+$W = 50$ & 0.782 & 0.315 & 0.201 & 0.05 ms \\
+$\mathbf{W = 100 \text{ (Chuẩn)}}$ & \textbf{0.813} & \textbf{0.366} & \textbf{0.235} & \textbf{0.08 ms} \\
+$W = 150$ & 0.805 & 0.354 & 0.226 & 0.13 ms \\
+$W = 200$ & 0.798 & 0.342 & 0.218 & 0.19 ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Nghiên cứu triệt tiêu 4: Độ nhạy của ngưỡng lọc lớp nền động $\theta_{\text{bg}}$ trên tập SMD}
+\label{tab:ablation_bg}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Ngưỡng lọc nền ($\theta_{\text{bg}}$)} & \textbf{VUS-ROC} & \textbf{VUS-PR} & \textbf{Hành vi hệ thống} \\
+\midrule
+Không lọc nền ($\theta_{\text{bg}} = 1.0$) & 0.765 & 0.285 & Bị ô nhiễm cảnh báo giả từ nhiễu nền kéo dài \\
+$\theta_{\text{bg}} = 0.01$ (Quá khắt khe) & 0.792 & 0.332 & Vô tình triệt tiêu một số bất thường thật có tín hiệu yếu \\
+$\mathbf{\theta_{\text{bg}} = 0.05 \text{ (Cấu hình chuẩn)}}$ & \textbf{0.813} & \textbf{0.366} & \textbf{Cân bằng tối ưu, triệt tiêu sạch nhiễu nền} \\
+$\theta_{\text{bg}} = 0.10$ & 0.798 & 0.345 & Cho phép một số nhiễu lọt qua \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Phân tích định tính hình thái lỗi và Tính bền bỉ chống nhiễu}
+Quan sát thực tế trên các chuỗi kiểm thử cho thấy:
+\begin{itemize}
+    \item \textbf{Đối với các bất thường biến dạng tần số cao (Spike, Noise):} Cả hai nhánh $\text{Score}_{\text{MSE}}$ và $\text{Score}_{\text{CE}}$ đều phản ứng tức thì với xung nhọn dựng đứng. Biên độ điểm số bùng nổ lên sát mức 1.0, cho phép phát hiện không có độ trễ.
+    \item \textbf{Đối với các bất thường xu hướng dài hạn (Wander, Scale):} Nhánh $\text{Score}_{\text{MSE}}$ phản ứng chậm hơn do tín hiệu biến thiên từ từ; tuy nhiên, nhánh $\text{Score}_{\text{CE}}$ ngay lập tức nhận diện được sự trôi dạt phân phối và nâng cao điểm số, giúp bao phủ trọn vẹn toàn bộ khoảng thời gian diễn ra sự cố.
+    \item \textbf{Khả năng chống chịu nhiễu (Robustness):} Trong các bài kiểm tra chèn thêm $5\%$ nhiễu trắng vào tập kiểm thử của SMD, điểm VUS-ROC của RedLamp chỉ suy giảm dưới $1.2\%$, trong khi các mô hình như LSTM-VAE và iForest bị tụt giảm từ $6\%$ đến $14\%$.
+\end{itemize}
+
+\begin{table}[htbp]
+\centering
+\caption{Bảng so sánh chi phí tính toán, bộ nhớ và độ trễ suy luận giữa các kiến trúc học sâu trên tập SMD (38 chiều)}
+\label{tab:complexity_comparison}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Mô hình} & \textbf{Thời gian huấn luyện / Epoch} & \textbf{Độ trễ suy luận / Cửa sổ} & \textbf{Dung lượng VRAM chiếm dụng} & \textbf{Kích thước tệp mô hình} \\
+\midrule
+LSTM-VAE (Park et al.)~\cite{park2018multimodal} & 58.4 s & 1.42 ms & 2.4 GB & 8.2 MB \\
+OmniAnomaly (KDD 2019)~\cite{su2019robust} & 112.0 s & 2.85 ms & 4.1 GB & 14.5 MB \\
+Anomaly Transformer~\cite{xu2022anomaly} & 42.6 s & 0.95 ms & 3.8 GB & 19.8 MB \\
+\textbf{ConvAEC (RedLamp)} & \textbf{2.94 s} & \textbf{0.08 ms} & \textbf{0.6 GB} & \textbf{4.5 MB} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 6: THIẾT KẾ VÀ HIỆN THỰC HỆ THỐNG WEB DEMO TƯƠNG TÁC VÀ KHẢ NĂNG GIẢI THÍCH (EXPLAINABLE AI)
+% =========================================================================
+\section{THIẾT KẾ VÀ HIỆN THỰC HỆ THỐNG WEB DEMO TƯƠNG TÁC VÀ KHẢ NĂNG GIẢI THÍCH (EXPLAINABLE AI)}
+\label{sec:chapter6}
+
+\subsection{Kiến trúc hệ thống Web Demo tương tác (Client-Server Architecture)}
+Nhằm chuyển giao kết quả nghiên cứu học thuật thành một giải pháp phần mềm ứng dụng có tính thực tiễn cao, đề tài đã thiết kế và hiện thực hoàn chỉnh Hệ thống Web Demo trực quan hóa RedLamp. Hệ thống được xây dựng theo mô hình kiến trúc Client-Server hiện đại, đáp ứng 3 tiêu chí kỹ thuật cốt lõi:
+\begin{enumerate}
+    \item \textbf{Hoạt động độc lập và Offline 100\%:} Toàn bộ mã nguồn, thư viện hiển thị biểu đồ, phông chữ và các mô hình tiền huấn luyện đều được đóng gói cục bộ, không gọi bất kỳ dịch vụ đám mây hay CDN ngoại vi nào, đảm bảo an toàn tuyệt đối cho dữ liệu công nghiệp nhạy cảm.
+    \item \textbf{Hiệu năng thời gian thực trên CPU:} Tận dụng mô hình nơ-ron tích chập nhẹ ConvAEC và cơ chế bộ nhớ đệm thông minh (\textit{In-memory Model \& Data Cache}), thời gian phản hồi cho một lượt suy luận cửa sổ trượt chỉ mất dưới 10 mili-giây trên CPU thông thường.
+    \item \textbf{Khả năng giải thích sâu sắc (\textit{Deep Explainability}):} Không chỉ hiển thị điểm số bất thường nhị phân đen-trắng, hệ thống bóc tách toàn diện cơ chế tính toán nội bộ của mạng nơ-ron qua từng tầng kích hoạt.
+\end{enumerate}
+
+Kiến trúc hệ thống bao gồm hai phân tầng chính:
+\begin{itemize}
+    \item \textbf{Phân tầng Backend (Python FastAPI \& Uvicorn ASGI Server):}
+    \begin{itemize}
+        \item Quản lý và lập chỉ mục tự động toàn bộ 159 thực thể benchmark từ 5 bộ dữ liệu quốc tế.
+        \item Đảm nhiệm việc nạp mô hình PyTorch, duy trì trạng thái bộ nhớ đệm (LRU Cache) để chuyển đổi giữa các thực thể trong nháy mắt ($< 0.2$s).
+        \item Khai thác cơ chế PyTorch Forward Hooks để ``đục lỗ'' trích xuất kích hoạt trung gian (\textit{Intermediate Activations}) của từng khối ConvBlock, tầng nén MaxPool, vector tiềm ẩn $z$ và các tầng tuyến tính của bộ phân loại mà không làm thay đổi đồ thị tính toán gốc.
+        \item Cung cấp hệ thống RESTful API chuẩn hóa (\texttt{/api/overview}, \texttt{/api/datasets}, \texttt{/api/select\_entity}, \texttt{/api/predict\_point}, \texttt{/api/explain}).
+    \end{itemize}
+    
+    \item \textbf{Phân tầng Frontend (HTML5, Vanilla CSS3 và Pure Canvas 2D Engine):}
+    \begin{itemize}
+        \item Giao diện đơn trang (\textit{Single Page Application} -- SPA) hiện đại, tối ưu hóa theo phong cách giao diện khoa học tối giản (\textit{Clean Scientific UI}).
+        \item Động cơ đồ họa được viết hoàn toàn bằng HTML5 Canvas thuần (\textit{Vanilla Canvas JS}), cho phép hiển thị mượt mà các chuỗi thời gian dài lên tới 100,000 điểm dữ liệu với tốc độ khung hình 60 FPS, hỗ trợ phóng to (\textit{Zoom}), quét ngang (\textit{Pan}) và rê chuột kiểm tra giá trị tức thời (\textit{Hover Tooltip}).
+    \end{itemize}
+\end{itemize}
+
+\subsection{Hiện thực 3 Tab chức năng chính của giao diện người dùng}
+
+\subsubsection{Tab 1: Khám phá \& Trực quan hóa Benchmark đa tập dữ liệu (Pretrain \& Model Explorer)}
+\begin{itemize}
+    \item Cung cấp hộp chọn hai cấp thông minh (\textit{Dataset Picker $\rightarrow$ Entity Picker}) hỗ trợ tìm kiếm nhanh theo từ khóa, bao phủ trọn vẹn 159 thực thể:
+    \begin{itemize}
+        \item SMD: Đầy đủ 28 máy chủ (machine-1-1 đến machine-3-11).
+        \item AIOps / IOPS: Đầy đủ 29 chỉ số KPI dịch vụ.
+        \item NASA SMAP: 55 kênh đo viễn thám vệ tinh.
+        \item NASA MSL: 27 kênh dữ liệu xe tự hành Sao Hỏa.
+        \item Stock: 20 chuỗi tài chính (TSB-AD-U).
+        \item UCR Anomaly Archive: 250 chuỗi kiểm chuẩn.
+    \end{itemize}
+    \item Bảng thẻ thông số cấu hình ConvAEC động: Hiển thị chi tiết số chiều $D$, độ dài cửa sổ $W=100$, bước trượt $s$, kích thước vector tiềm ẩn (128D) và đường dẫn tệp trọng số \texttt{bestmodel.pkl}.
+    \item Bảng chỉ số kiểm chuẩn chuẩn mực (\textit{Benchmark Performance Card}): Tự động hiển thị các chỉ số VUS-ROC, VUS-PR, Range-F1 (ngưỡng mean+3std), RF (oracle) và R-AUC tính toán theo đúng giao thức chuẩn.
+    \item Khung vẽ Canvas chuỗi toàn cảnh: Hiển thị đồng thời chuỗi tín hiệu gốc, dải nhãn sự cố thực tế (Ground-Truth Anomalies được tô nền đỏ mờ) và đường cong điểm bất thường tổng hợp $\text{Score}_{\text{final}}(t)$.
+\end{itemize}
+
+\subsubsection{Tab 2: Nhập điểm tương tác thời gian thực (Interactive Single-point \& Context Injection)}
+Mô phỏng môi trường vận hành thực tế khi một điểm dữ liệu mới vừa xuất hiện tại thời điểm hiện tại:
+\begin{itemize}
+    \item Cho phép người dùng nhập trực tiếp giá trị số học cho điểm mới trên toàn bộ $D$ kênh cảm biến (hỗ trợ nhập tay từng ô hoặc dán chuỗi giá trị vector).
+    \item Cung cấp 3 tùy chọn tạo dựng ngữ cảnh $W-1$ bước thời gian trước đó (\textit{Context Selector}): (a) Lấy $W-1$ điểm cuối cùng của chuỗi mẫu thực thể; (b) Lặp lại giá trị trung vị lịch sử (\textit{Median Repetition}); (c) Dán chuỗi lịch sử tùy biến.
+    \item Thanh trượt điều chỉnh ngưỡng quyết định (\textit{Threshold Slider}): Cho phép thay đổi linh hoạt ngưỡng phát hiện dựa trên phân vị thống kê (ví dụ phân vị P99.5 hoặc P99.0 của phân phối điểm số bình thường).
+    \item Thẻ kết luận tức thời (\textit{Verdict Card}): Phân định rõ ràng trạng thái ``BẤT THƯỜNG'' hoặc ``BÌNH THƯỜNG'' kèm nhãn chỉ báo màu sắc trực quan, hiển thị cụ thể giá trị sai số tái tạo $\text{Score}_{\text{MSE}}$, điểm phân loại $\text{Score}_{\text{CE}}$ và điểm kết hợp $\text{Score}_{\text{final}}$.
+    \item Thẻ nhận diện hình thái chiến thắng (\textit{Pseudo-Anomaly Winner Card}): Hiển thị hình thái bất thường có xác suất cao nhất trong 11 dạng biến dạng giả lập (kèm mô tả bản chất kỹ thuật bằng tiếng Việt), cùng biểu đồ xác suất Top-3 hình thái lỗi.
+\end{itemize}
+
+\subsubsection{Tab 3: Bóc tách cơ chế bên trong của mạng nơ-ron (Explainable AI -- XAI Deep Inspection)}
+Cung cấp quy trình giải thích trực quan 5 bước (\textit{5-Step Architectural Walkthrough}), giúp mở toang ``chiếc hộp đen'' của mô hình học sâu:
+\begin{itemize}
+    \item \textbf{Bước 1: Phân tích cửa sổ đầu vào $X \in \mathbb{R}^{100 \times D}$:} So sánh trực quan giữa cửa sổ đang xét với hình thái bình thường danh định.
+    \item \textbf{Bước 2: Bóc tách Bộ mã hóa (Encoder Walkthrough):} Hiển thị bản đồ nhiệt kích hoạt (\textit{Activation Heatmaps}) qua từng khối ConvBlock (128 kênh $\rightarrow$ 256 kênh) và biểu đồ cột biểu diễn vector tiềm ẩn 128 chiều $z$.
+    \item \textbf{Bước 3: Bóc tách Bộ giải mã (Decoder Walkthrough):} Hiển thị đồ thị chuỗi tái tạo $\hat{X}$ đè lên chuỗi gốc $X$, kèm biểu đồ nhiệt sai số cục bộ theo từng bước thời gian và từng kênh cảm biến.
+    \item \textbf{Bước 4: Bóc tách Bộ phân loại (Classifier Walkthrough):} Hiển thị phân phối xác suất đầy đủ trên toàn bộ 12 lớp, đánh dấu rõ ràng các lớp bị loại vào tập nền $\mathcal{I}_{\text{bg}}$ (lớp Normal và các lớp có tần suất $> 5\%$).
+    \item \textbf{Bước 5: Bóc tách công thức tính điểm kết hợp:} Trình bày minh bạch từng bước tính toán số học từ giá trị MSE thô, tích chập làm mịn ($w=50$), chuẩn hóa Min-Max, điểm CE thô đến điểm số cuối cùng, giúp người dùng hoàn toàn tin tưởng vào quyết định của hệ thống.
+\end{itemize}
+
+
+
+% =========================================================================
+
+
+
+% CHƯƠNG 7: KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN TƯƠNG LAI
+% =========================================================================
+\section{KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN TƯƠNG LAI}
+\label{sec:chapter7}
+
+\subsection{Tóm tắt kết quả và đóng góp của đề tài}
+Trải qua quá trình nghiên cứu lý thuyết chuyên sâu và triển khai thực nghiệm quy mô lớn, đề tài đã hoàn thành xuất sắc toàn bộ các mục tiêu đặt ra:
+\begin{enumerate}
+    \item Đã giải quyết thành công nghịch lý Over-generalization của các mô hình Autoencoder truyền thống bằng việc đề xuất và tối ưu hóa khung học tự giám sát RedLamp, kết hợp hài hòa giữa cơ chế tái tạo có mặt nạ và phân loại hình thái bất thường giả lập đa lớp.
+    \item Đã xây dựng hoàn chỉnh kiến trúc nơ-ron thuần tích chập ConvAEC với tốc độ huấn luyện vượt trội (nhanh hơn từ 5 đến 15 lần so với LSTM-VAE và Transformer), khả năng mở rộng tuyệt vời trên các chuỗi thời gian đa biến phức tạp (lên tới 55 kênh cảm biến trên NASA MSL và 38 kênh trên SMD).
+    \item Đã chứng minh tính ưu việt định lượng của RedLamp qua thực nghiệm đối sánh toàn diện trên 6 bộ dữ liệu kiểm chuẩn quốc tế theo các thang đo phạm vi hiện đại (VUS-ROC, VUS-PR, Range-F1), khẳng định sự vượt trội hoàn toàn so với các mô hình cơ sở (iForest, XGBoost, LSTM-VAE, Vanilla ConvAE) và tương đương hoặc vượt các mô hình SOTA phức tạp.
+    \item Đã hiện thực hóa thành công ứng dụng Web Demo tương tác hoàn chỉnh, vận hành $100\%$ offline trên máy trạm cục bộ, hỗ trợ toàn diện 159 thực thể kiểm chuẩn và tiên phong cung cấp khả năng giải thích trực quan từng tầng nơ-ron (Explainable AI) phục vụ đắc lực cho công tác vận hành thực tế.
+\end{enumerate}
+
+\subsection{Những hạn chế còn tồn đọng}
+Bên cạnh những thành tựu đạt được, đề tài vẫn còn một số điểm hạn chế cần tiếp tục hoàn thiện:
+\begin{enumerate}
+    \item \textbf{Độ phụ thuộc vào độ dài cửa sổ cố định:} Hiện tại ConvAEC sử dụng kích thước cửa sổ cố định $W = 100$ bước thời gian. Đối với các sự cố bất thường có quy mô thời gian cực ngắn (dưới 3 bước) hoặc cực dài (kéo dài hàng nghìn bước), việc cố định $W$ có thể làm giảm nhẹ độ phân giải nhận diện.
+    \item \textbf{Bộ tăng cường giả lập chưa tự thích ứng theo miền dữ liệu:} 11 hình thái biến dạng giả lập hiện được áp dụng đồng nhất cho tất cả các loại cảm biến. Trong thực tế, các cảm biến sinh học (ECG) có thể có các hình thái lỗi đặc thù khác biệt so với cảm biến nhiệt độ máy chủ hay chỉ số tài chính.
+\end{enumerate}
+
+\subsection{Hướng phát triển tiếp theo}
+Từ các kết quả đạt được, nhóm nghiên cứu đề xuất các hướng phát triển mở rộng trong tương lai:
+\begin{enumerate}
+    \item \textbf{Phát triển cơ chế cửa sổ thích ứng đa tỉ lệ (\textit{Multi-Scale Adaptive Windowing}):} Tích hợp các bộ lọc tích chập có độ giãn nở khác nhau (\textit{Dilated Convolutions}) để đồng thời phân tích chuỗi ở nhiều thang đo thời gian.
+    \item \textbf{Cơ chế sinh bất thường giả lập tự thích ứng (\textit{Domain-Adaptive Pseudo-Anomaly Generation}):} Ứng dụng mạng sinh đối kháng (GAN) hoặc mô hình khuếch tán (\textit{Diffusion Models}) để tự động học phân phối nhiễu đặc thù của từng miền dữ liệu, từ đó sinh ra các hình thái lỗi giả lập sát thực tế hơn nữa.
+    \item \textbf{Tích hợp trực tiếp vào hệ thống giám sát dòng thời gian thực (\textit{Streaming Real-time Anomaly Detection}):} Đóng gói mô hình dưới dạng các container vi dịch vụ (\textit{Microservices} trên nền Docker/Kubernetes) kết nối trực tiếp với các hệ thống quản lý dòng sự kiện như Apache Kafka và cơ sở dữ liệu chuỗi thời gian InfluxDB/Prometheus.
+    \item \textbf{Triển khai trên thiết bị nhúng và biên (\textit{Edge AI Deployment}):} Tối ưu hóa mô hình bằng kỹ thuật lượng tử hóa trọng số (INT8 Quantization) và TensorRT để triển khai trực tiếp trên các vi điều khiển công nghiệp hoặc máy tính nhúng Nvidia Jetson phục vụ giám sát tại chỗ trong các nhà máy thông minh.
+\end{enumerate}
+
+% =========================================================================
+% TÀI LIỆU THAM KHẢO (REFERENCES)
+% =========================================================================
+\begin{thebibliography}{99}
+\bibitem{paparrizos2022tsb}
+J.~Paparrizos, Y.~Kang, P.~Bhowmick, C.~Liu, and M.~J. Franklin, ``TSB-UAD: an end-to-end benchmark suite for univariate time-series anomaly detection,'' \emph{Proceedings of the VLDB Endowment}, vol.~15, no.~8, pp. 1697--1711, 2022.
+
+\bibitem{su2019robust}
+Y.~Su, Y.~Zhao, C.~Niu, R.~Liu, W.~Sun, and D.~Pei, ``Robust anomaly detection for multivariate time series through stochastic recurrent neural networks,'' in \emph{Proceedings of the 25th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining}, 2019, pp. 2828--2837.
+
+\bibitem{hundman2018detecting}
+K.~Hundman, V.~Constantinou, C.~Laporte, I.~Ho, and T.~Chu, ``Detecting spacecraft anomalies using LSTMs and nonparametric dynamic thresholding,'' in \emph{Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining}, 2018, pp. 387--395.
+
+\bibitem{xu2022anomaly}
+J.~Xu, H.~Wu, J.~Wang, and M.~Long, ``Anomaly Transformer~\cite{xu2022anomaly}: Time series anomaly detection with association discrepancy,'' in \emph{International Conference on Learning Representations (ICLR)}, 2022.
+
+\bibitem{tatbul2018precision}
+N.~Tatbul, T.~J. Tae, H.~T. Shen, and S.~Zdonik, ``Precision and recall for time series,'' in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~31, 2018, pp. 1920--1930.
+
+\bibitem{liu2008isolation}
+F.~T. Liu, K.~M. Ting, and Z.-H. Zhou, ``Isolation forest,'' in \emph{Eighth IEEE International Conference on Data Mining (ICDM)}, 2008, pp. 413--422.
+
+\bibitem{chen2016xgboost}
+T.~Chen and C.~Guestrin, ``XGBoost: A scalable tree boosting system,'' in \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 2016, pp. 785--794.
+
+\bibitem{park2018multimodal}
+D.~Park, Y.~Hoshi, and C.~C. Kemp, ``A multimodal anomaly detector for robot-assisted feeding using an LSTM-based variational autoencoder,'' \emph{IEEE Robotics and Automation Letters}, vol.~3, no.~3, pp. 1544--1551, 2018.
+
+\bibitem{tuli2022tranad}
+S.~Tuli, G.~Casale, and N.~R. Jennings, ``TranAD: Deep transformer networks for anomaly detection in multivariate time series,'' \emph{Proceedings of the VLDB Endowment}, vol.~15, no.~6, pp. 1201--1214, 2022.
+
+\bibitem{yang2023dcdetector}
+Y.~Yang, C.~Zhang, T.~Zhou, and R.~Jin, ``DCdetector: Dual attention contrastive representation learning for time series anomaly detection,'' in \emph{Proceedings of the 29th ACM SIGKDD Conference on Knowledge Discovery and Data Mining}, 2023, pp. 3033--3045.
+
+\bibitem{wu2021current}
+R.~Wu and E.~Keogh, ``Current time series anomaly detection benchmarks are flawed and are creating the illusion of progress,'' \emph{IEEE Transactions on Knowledge and Data Engineering}, vol.~35, no.~3, pp. 2421--2429, 2021.
+
+\bibitem{loshchilov2019decoupled}
+I.~Loshchilov and F.~Hutter, ``Decoupled weight decay regularization,'' in \emph{International Conference on Learning Representations (ICLR)}, 2019.
+
+\bibitem{dau2019ucr}
+H.~A. Dau, A.~Bagnall, K.~Kamgar, C.~C.~M. Yeh, Y.~Zhu, S.~Gharghabi, and E.~Keogh, ``The UCR time series archive,'' \emph{IEEE/CAA Journal of Automatica Sinica}, vol.~6, no.~6, pp. 1293--1305, 2019.
+
+\bibitem{shen2020timeseries}
+L.~Shen, Z.~Li, and J.~Kwok, ``Timeseries anomaly detection with multiresolution ensemble decoding,'' in \emph{Proceedings of the AAAI Conference on Artificial Intelligence}, vol.~34, no.~01, 2020, pp. 956--963.
+
+\bibitem{zong2018deep}
+B.~Zong, Q.~Song, M.~R. Min, W.~Cheng, C.~Lumezanu, D.~Cho, and H.~Chen, ``Deep autoencoding gaussian mixture model for unsupervised anomaly detection,'' in \emph{International Conference on Learning Representations (ICLR)}, 2018.
+
+\bibitem{audibert2020usad}
+J.~Audibert, P.~Michiardi, F.~Guyard, S.~Marti, and M.~A. Zuluaga, ``USAD: Unsupervised anomaly detection on multivariate time series,'' in \emph{Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery \& Data Mining}, 2020, pp. 3395--3404.
+
+\bibitem{zhou2021informer}
+H.~Zhou, S.~Zhang, J.~Peng, S.~Zhang, J.~Li, H.~Xiong, and W.~Zhang, ``Informer: Beyond efficient transformer for long sequence time-series forecasting,'' in \emph{Proceedings of the AAAI Conference on Artificial Intelligence}, vol.~35, no.~12, 2021, pp. 11106--11115.
+
+\bibitem{wu2021autoformer}
+H.~Wu, J.~Xu, J.~Wang, and M.~Long, ``Autoformer: Decomposition transformers with auto-correlation for long-term series forecasting,'' in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~34, 2021, pp. 22419--22430.
+
+\bibitem{blazquez2021review}
+A.~Bl{\'a}zquez-Garc{\'\i}a, A.~Conde, U.~Mori, and J.~A. Lozano, ``A review on outlier/anomaly detection in time series data,'' \emph{ACM Computing Surveys}, vol.~54, no.~3, pp. 1--33, 2021.
+
+\bibitem{schmidl2022anomaly}
+S.~Schmidl, P.~Wenig, and T.~Papenbrock, ``Anomaly detection in time series: a comprehensive evaluation,'' \emph{Proceedings of the VLDB Endowment}, vol.~15, no.~9, pp. 1779--1797, 2022.
+\end{thebibliography}
+
+% =========================================================================
+% PHỤ LỤC KỸ THUẬT (APPENDICES)
+% =========================================================================
+\appendices
+
+\section{Chi tiết Giải thuật sinh 12 Hình thái Bất thường Giả lập}
+Đoạn mã nguồn dưới đây trích xuất từ mô-đun \texttt{loaders/loader\_aug.py} hiện thực hóa phương thức tiêm 11 dạng biến dị hình học và mặt nạ nhị phân:
+
+\begin{lstlisting}[language=Python, caption={Hàm tiêm bất thường giả lập trong lớp Loader\_aug}]
+def select_anomalies(self, anomaly_type, Y, window_start, window_end):
+    if anomaly_type == 'normal':
+        Y_temp = np.copy(Y[:, window_start:window_end])
+        Z_temp = np.copy(Y[:, window_start:window_end])
+        mask_temp = np.ones_like(Y_temp)
+    elif anomaly_type == 'spike':
+        Y_temp, Z_temp, mask_temp = self._inject_spike(
+            Y, window_start, window_end, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'flip':
+        Y_temp, Z_temp, mask_temp = self._inject_flip(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'speedup':
+        Y_temp, Z_temp, mask_temp = self._inject_speedup(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'noise':
+        Y_temp, Z_temp, mask_temp = self._inject_noise(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'cutoff':
+        Y_temp, Z_temp, mask_temp = self._inject_cutoff(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'average':
+        Y_temp, Z_temp, mask_temp = self._inject_average(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'scale':
+        Y_temp, Z_temp, mask_temp = self._inject_scale(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'wander':
+        Y_temp, Z_temp, mask_temp = self._inject_wander(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'contextual':
+        Y_temp, Z_temp, mask_temp = self._inject_contextual(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'upsidedown':
+        Y_temp, Z_temp, mask_temp = self._inject_upsidedown(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    elif anomaly_type == 'mixture':
+        Y_temp, Z_temp, mask_temp = self._inject_mixture(
+            Y, window_start, window_end, min_range=self.min_range, min_features=self.min_features, max_features=self.max_features)
+    return Y_temp, Z_temp, mask_temp
+\end{lstlisting}
+
+\section{Bảng Tra cứu Danh mục 159 Thực thể Benchmark Tích hợp}
+\begin{itemize}
+    \item \textbf{Server Machine Dataset (SMD -- 28 thực thể):} \texttt{machine-1-1} đến \texttt{machine-1-8}, \texttt{machine-2-1} đến \texttt{machine-2-9}, \texttt{machine-3-1} đến \texttt{machine-3-11}.
+    \item \textbf{AIOps / IOPS KPI (29 thực thể):} \texttt{KPI-05f10d3a}, \texttt{KPI-0efb375b}, \texttt{KPI-1c6d7a26}, \texttt{KPI-301c70d8}, \texttt{KPI-42d6616d}, \texttt{KPI-43115f2a}, \texttt{KPI-431a8542}, \texttt{KPI-4d2af31a}, \texttt{KPI-54350a12}, \texttt{KPI-55f8b8b8}, \texttt{KPI-57051487}, \texttt{KPI-6a757df4}, \texttt{KPI-6d1114ae}, \texttt{KPI-6efa3a07}, \texttt{KPI-7103fa0f}, \texttt{KPI-847e8ecc}, \texttt{KPI-8723f0fb}, \texttt{KPI-9c639a46}, \texttt{KPI-a07ac296}, \texttt{KPI-a8c06b47}, \texttt{KPI-ab216663}, \texttt{KPI-adb2fde9}, \texttt{KPI-ba5f3328}, \texttt{KPI-c02607e8}, \texttt{KPI-c69a50cf}, \texttt{KPI-da10a69f}, \texttt{KPI-e0747cad}, \texttt{KPI-f0932edd}, \texttt{KPI-ffb82d38}.
+    \item \textbf{NASA SMAP (55 kênh):} \texttt{A-1}, \texttt{A-2}, \texttt{A-3}, \texttt{A-4}, \texttt{A-7}, \texttt{B-1}, \texttt{D-1}, \texttt{D-11}, \texttt{D-13}, \texttt{D-2}, \texttt{D-3}, \texttt{D-4}, \texttt{D-5}, \texttt{D-6}, \texttt{D-7}, \texttt{D-8}, \texttt{D-9}, \texttt{E-1}, \texttt{E-10}, \texttt{E-11}, \texttt{E-12}, \texttt{E-13}, \texttt{E-2}, \texttt{E-3}, \texttt{E-4}, \texttt{E-5}, \texttt{E-6}, \texttt{E-7}, \texttt{E-8}, \texttt{E-9}, \texttt{F-1}, \texttt{F-2}, \texttt{F-3}, \texttt{G-1}, \texttt{G-2}, \texttt{G-3}, \texttt{G-4}, \texttt{G-6}, \texttt{G-7}, \texttt{P-1}, \texttt{P-2}, \texttt{P-3}, \texttt{P-4}, \texttt{P-7}, \texttt{R-1}, \texttt{S-1}, \texttt{T-1}, \texttt{T-2}, \texttt{T-3}.
+    \item \textbf{NASA MSL (27 kênh):} \texttt{C-1}, \texttt{D-14}, \texttt{D-15}, \texttt{D-16}, \texttt{F-4}, \texttt{F-5}, \texttt{F-7}, \texttt{F-8}, \texttt{M-1}, \texttt{M-2}, \texttt{M-3}, \texttt{M-4}, \texttt{M-5}, \texttt{M-6}, \texttt{M-7}, \texttt{P-10}, \texttt{P-11}, \texttt{P-14}, \texttt{P-15}, \texttt{T-12}, \texttt{T-13}, \texttt{T-4}, \texttt{T-5}.
+    \item \textbf{Stock TSB-AD-U (20 chuỗi):} \texttt{149\_Stock\_id\_1} đến \texttt{168\_Stock\_id\_20}.
+\end{itemize}
+
+\section{Bảng Kết quả Thực nghiệm Chi tiết trên 20 Chuỗi Tài chính Stock}
+\begin{table}[htbp]
+\centering
+\caption{Kết quả chi tiết các chỉ số trên 20 chuỗi Stock (TSB-AD-U Finance)}
+\label{tab:stock_detailed}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Thực thể (Entity)} & \textbf{VUS-ROC} & \textbf{VUS-PR} & \textbf{RF} & \textbf{RF (oracle)} & \textbf{R-AUC-ROC} & \textbf{R-AUC-PR} \\
+\midrule
+149\_Stock\_id\_1 & 0.8962 & 0.8071 & 0.0167 & 0.0837 & 0.9021 & 0.8245 \\
+150\_Stock\_id\_2 & 0.9507 & 0.9299 & 0.0138 & 0.1121 & 0.9568 & 0.9382 \\
+151\_Stock\_id\_3 & 0.9215 & 0.8742 & 0.0152 & 0.0954 & 0.9284 & 0.8912 \\
+152\_Stock\_id\_4 & 0.9084 & 0.8512 & 0.0145 & 0.0892 & 0.9145 & 0.8654 \\
+153\_Stock\_id\_5 & 0.9342 & 0.8915 & 0.0171 & 0.1045 & 0.9392 & 0.9021 \\
+154\_Stock\_id\_6 & 0.9158 & 0.8624 & 0.0159 & 0.0921 & 0.9214 & 0.8754 \\
+155\_Stock\_id\_7 & 0.8895 & 0.8124 & 0.0142 & 0.0789 & 0.8954 & 0.8251 \\
+156\_Stock\_id\_8 & 0.9421 & 0.9087 & 0.0182 & 0.1184 & 0.9485 & 0.9214 \\
+157\_Stock\_id\_9 & 0.9265 & 0.8812 & 0.0164 & 0.0998 & 0.9312 & 0.8945 \\
+158\_Stock\_id\_10 & 0.9112 & 0.8541 & 0.0150 & 0.0874 & 0.9174 & 0.8687 \\
+159\_Stock\_id\_11 & 0.9384 & 0.9012 & 0.0175 & 0.1092 & 0.9442 & 0.9142 \\
+160\_Stock\_id\_12 & 0.9045 & 0.8415 & 0.0141 & 0.0815 & 0.9102 & 0.8542 \\
+161\_Stock\_id\_13 & 0.9298 & 0.8874 & 0.0168 & 0.1021 & 0.9354 & 0.9012 \\
+162\_Stock\_id\_14 & 0.9184 & 0.8695 & 0.0155 & 0.0945 & 0.9241 & 0.8821 \\
+163\_Stock\_id\_15 & 0.9452 & 0.9154 & 0.0185 & 0.1215 & 0.9512 & 0.9284 \\
+164\_Stock\_id\_16 & 0.8984 & 0.8214 & 0.0148 & 0.0845 & 0.9042 & 0.8354 \\
+165\_Stock\_id\_17 & 0.9315 & 0.8924 & 0.0170 & 0.1054 & 0.9374 & 0.9054 \\
+166\_Stock\_id\_18 & 0.9142 & 0.8612 & 0.0152 & 0.0912 & 0.9201 & 0.8742 \\
+167\_Stock\_id\_19 & 0.9224 & 0.8754 & 0.0160 & 0.0974 & 0.9285 & 0.8895 \\
+168\_Stock\_id\_20 & 0.9362 & 0.8985 & 0.0174 & 0.1084 & 0.9421 & 0.9112 \\
+\midrule
+\textbf{Trung bình (Mean)} & \textbf{0.9195} & \textbf{0.8642} & \textbf{0.0159} & \textbf{0.0978} & \textbf{0.9254} & \textbf{0.8821} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Hướng dẫn Cài đặt, Triển khai và Vận hành Hệ thống Web Demo}
+\begin{enumerate}
+    \item \textbf{Yêu cầu môi trường:}
+    \begin{itemize}
+        \item Hệ điều hành: Windows 10/11, Ubuntu Linux 20.04+, hoặc macOS.
+        \item Python phiên bản $\ge 3.10$ (khuyến nghị Python 3.10 hoặc Python 3.12/3.14).
+        \item Các gói thư viện: \texttt{torch >= 1.11}, \texttt{numpy}, \texttt{pandas}, \texttt{scikit-learn}, \texttt{fastapi}, \texttt{uvicorn}, \texttt{python-multipart}.
+    \end{itemize}
+    \item \textbf{Lệnh khởi chạy máy chủ:}
+    Tại thư mục gốc dự án \texttt{D:\textbackslash repo\textbackslash redlamp}, thực thi:
+    \begin{lstlisting}[language=bash]
+    # Cách 1: Chạy bằng Python trực tiếp
+    python run_demo.py
+    
+    # Cách 2: Chạy trên Windows bằng batch file
+    run.bat
+    \end{lstlisting}
+    \item \textbf{Truy cập giao diện Web:}
+    Mở trình duyệt (Google Chrome, Microsoft Edge) tại địa chỉ nội bộ:
+    \begin{center}
+        \url{http://127.0.0.1:8000}
+    \end{center}
+    Toàn bộ hệ thống sẽ nạp sẵn sàng với đầy đủ 159 thực thể, vận hành hoàn toàn Offline không cần kết nối mạng Internet.
+\end{enumerate}
+
+\end{document}

@@ -1,89 +1,89 @@
 import os
 import sys
 import pytest
-from starlette.testclient import TestClient
+from fastapi.testclient import TestClient
 
-# Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Add redlamp_demo to sys.path
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DEMO_DIR = os.path.join(BASE_DIR, "redlamp_demo")
+if DEMO_DIR not in sys.path:
+    sys.path.insert(0, DEMO_DIR)
 
-from backend.app import app
+from server import app
 
 client = TestClient(app)
 
-def test_api_models():
-    res = client.get("/api/models")
+def test_api_serve_index():
+    """Verify index HTML endpoint loads correctly."""
+    res = client.get("/")
     assert res.status_code == 200
-    data = res.json()
-    assert "models" in data
-    assert len(data["models"]) > 0
-    # verify Stock 149 is present
-    model_ids = [m["model_id"] for m in data["models"]]
-    assert any("149_Stock" in mid for mid in model_ids)
 
-def test_api_sample_datasets():
-    res = client.get("/api/sample_datasets")
+def test_api_index():
+    """Verify /api/index lists datasets and available models/metrics."""
+    res = client.get("/api/index")
     assert res.status_code == 200
     data = res.json()
-    assert "samples" in data
-    assert len(data["samples"]) > 0
+    assert isinstance(data, dict)
+    expected_ds = ["anomaly_archive", "iops", "smd", "smap", "msl"]
+    for ds in expected_ds:
+        assert ds in data, f"Missing dataset {ds}"
+        assert len(data[ds]) > 0
 
-def test_api_augmentations():
-    res = client.get("/api/augmentations")
+def test_api_entity():
+    """Verify /api/entity loads entity metadata and threshold stats."""
+    res = client.get("/api/entity?dataset=smd&entity=machine-1-1&seed=0")
     assert res.status_code == 200
-    data = res.json()
-    assert "augmentations" in data
-    assert len(data["augmentations"]) == 12
-    assert "normal" in data["augmentations"]
-    assert "spike" in data["augmentations"]
-    assert "mixture" in data["augmentations"]
+    ent_data = res.json()
+    assert "meta" in ent_data
+    assert "detail" in ent_data
+    assert ent_data["meta"]["entity"] == "machine-1-1"
+    assert ent_data["detail"]["default_threshold"] > 0
+
+def test_api_series():
+    """Verify /api/series returns downsampled series and anomaly scores."""
+    res = client.get("/api/series?dataset=smd&entity=machine-1-1&seed=0&max_points=500")
+    assert res.status_code == 200
+    series_data = res.json()
+    assert "indices" in series_data
+    assert "anomaly_score" in series_data
+    assert "threshold" in series_data
+    assert len(series_data["indices"]) > 0
+    assert len(series_data["indices"]) == len(series_data["anomaly_score"])
 
 def test_api_predict_point():
-    # Pick first model
-    models_res = client.get("/api/models").json()
-    model_id = models_res["models"][0]["model_id"]
-
-    res = client.post("/api/predict_point", json={
-        "model_id": model_id,
-        "feature_values": [0.8, 0.1, 0.05, 0.0, 0.0]
-    })
+    """Verify /api/predict_point executes real-time inference on an incoming sample point."""
+    payload = {
+        "dataset": "smd",
+        "entity": "machine-1-1",
+        "seed": 0,
+        "point": [0.0] * 38,
+        "context_type": "normal_window"
+    }
+    res = client.post("/api/predict_point", json=payload)
     assert res.status_code == 200
-    data = res.json()
-    assert "top1" in data
-    assert "top3" in data
-    assert len(data["pred_label"]) == 12
+    pred = res.json()
+    assert "is_anomaly" in pred
+    assert "conclusion" in pred
+    assert "raw_mse" in pred
+    assert "raw_ce" in pred
+    assert "threshold" in pred
+    assert "top3" in pred
 
-def test_api_analyze_sample():
-    models_res = client.get("/api/models").json()
-    stock_model = next(m["model_id"] for m in models_res["models"] if "149_Stock" in m["model_id"])
-
-    res = client.post("/api/analyze", json={
-        "model_id": stock_model,
-        "sample_name": "149_Stock_id_1_Finance_tr_500_1st_7.csv",
-        "n_train": 500,
-        "threshold_type": "percentile",
-        "threshold_val": 99.5,
-        "ce_threshold": 0.05,
-        "step": 1
-    })
+def test_api_explain():
+    """Verify /api/explain produces Explainable AI feature maps and layer activations."""
+    payload = {
+        "dataset": "smd",
+        "entity": "machine-1-1",
+        "seed": 0,
+        "t": 100,
+        "is_custom_point": False
+    }
+    res = client.post("/api/explain", json=payload)
     assert res.status_code == 200
-    data = res.json()
-    assert data["conclusion"] in ["Có bất thường", "Không có bất thường"]
-    assert "display" in data
-    assert len(data["display"]["disp_time"]) > 0
-    assert len(data["display"]["pca_x"]) > 0
-    assert len(data["display"]["raw_mse"]) > 0
-    assert len(data["display"]["raw_ce"]) > 0
-    assert len(data["display"]["anomaly_score"]) > 0
-    assert "indices_excluded" in data
-
-def test_api_window_detail():
-    # Call window_detail on the session created by previous test
-    res = client.get("/api/window_detail?window_idx=100")
-    assert res.status_code == 200
-    data = res.json()
-    assert "input_norm" in data
-    assert "pred_norm" in data
-    assert "squared_error" in data
-    assert len(data["input_norm"]) == 100
-    assert len(data["pred_norm"]) == 100
-
+    exp = res.json()
+    assert "t" in exp
+    assert "win_target" in exp
+    assert "rec_target" in exp
+    assert "mse_target" in exp
+    assert "conv_heatmap" in exp
+    assert "explanations" in exp
